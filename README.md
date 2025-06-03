@@ -5,9 +5,11 @@
 >
 > ~ An excerpt from a once-well-known piece of internet culture
 
+## About
+
 This repo holds the brain of the game! And... also other supporting functionalities
 
-## Features
+## Feature Roadmap
 
 - [ ] Core game
 - [ ] Leaderboard
