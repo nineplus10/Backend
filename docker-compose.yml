@@ -2,7 +2,7 @@ services:
   server:
     build: .
     ports: 
-      - ${APP_PORT}:7788
+      - 7788:${APP_PORT}
     working_dir: /app
     volumes:
       - ./:/app
@@ -11,14 +11,12 @@ services:
       APP_PORT: ${APP_PORT:-8000}
 
       ACCESS_TOKEN_SECRET: ${ACCESS_TOKEN_SECRET:-you_wouldnt_guess_it}
-      ACCESS_TOKEN_LIFETIME: ${ACCESS_TOKEN_SECRET:-10}
+      ACCESS_TOKEN_LIFETIME: ${ACCESS_TOKEN_LIFETIME:-10}
       REFRESH_TOKEN_SECRET: ${REFRESH_TOKEN_SECRET:-quit_it_its_no_use}
       REFRESH_TOKEN_LIFETIME: ${REFRESH_TOKEN_LIFETIME:-10}
 
       AUTH_MAX_FAIL: ${AUTH_MAX_FAIL:-3}
       AUTH_FAIL_COOLDOWN: ${AUTH_FAIL_COOLDOWN:-10}
-      AUTH_ACCOUNT_BACKOFF: ${AUTH_ACCOUNT_BACKOFF:-3}
-      AUTH_ORIGIN_BACKOFF: ${AUTH_ORIGIN_BACKOFF:-3}
 
       DB_URL: ${DB_URL:-postgresql://postgres:dont_you_have_something_better_to_do@db-main:5432/mydb?schema=public}
       CACHE_URL: ${DB_URL:-redis://:dont_you_have_something_better_to_do@db-cache:6379/0}
