@@ -1,5 +1,5 @@
 import { gEnv } from "env";
-import { Entity } from "../../../_lib/Domain/_Entity";
+import { Entity } from "../../../_lib/Domain/Entity";
 
 interface AuthRecordProps {
     playerId: number,

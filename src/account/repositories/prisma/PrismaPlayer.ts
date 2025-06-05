@@ -4,23 +4,36 @@ import { AppErr, AppError } from "_lib/Error/AppError";
 import { PlayerRepo } from "account/repositories/Player";
 import { PrismaClient } from "_lib/_generated/prisma";
 import { Session } from "account/domain/entities/Session";
+import { Stats } from "account/domain/entities/Stats";
+import { Handle } from "account/domain/values/handle";
+import { Bio } from "account/domain/values/bio";
+import { Email } from "account/domain/values/email";
 
 export class PrismaPlayer implements PlayerRepo {
     async findMany(offset: number, limit: number): Promise<Player[]> {
         const P = new PrismaClient()
         return await P.players
             .findMany({
+                include: { stats: true },
                 take: limit,
-                skip: offset
+                skip: offset,
             })
             .then(rows => {
-                return rows.map(r => {
+                return rows.map(row => {
+                    const stats = row.stats!
+                    const s = Stats.create({
+                        playerId: stats.player_id,
+                        gamePlayed: stats.game_played,
+                        wins: stats.game_played
+                    }, stats.id)
+
                     return Player.create({
-                        password: r.password,
-                        username: r.username,
-                        bio: r.bio,
-                        email: r.email
-                    }, r.id)
+                        password: row.password,
+                        username: Handle.create(row.username),
+                        bio: Bio.create(row.bio),
+                        email: Email.create(row.email),
+                        stats: s
+                    }, row.id)
                 })
             })
     }
@@ -29,6 +42,7 @@ export class PrismaPlayer implements PlayerRepo {
         const P = new PrismaClient()
         return await P.players
             .findFirst({
+                include: { stats: true },
                 where: {
                     OR: [
                         { username: username },
@@ -40,11 +54,19 @@ export class PrismaPlayer implements PlayerRepo {
                 if(!row)
                     return undefined
 
+                const stats = row.stats!
+                const s = Stats.create({
+                    playerId: stats.player_id,
+                    gamePlayed: stats.game_played,
+                    wins: stats.game_played
+                }, stats.id)
+
                 return Player.create({
-                    username: row.username,
                     password: row.password,
-                    bio: row.bio,
-                    email: row.email,
+                    username: Handle.create(row.username),
+                    bio: Bio.create(row.bio),
+                    email: Email.create(row.email),
+                    stats: s
                 }, row.id)
             })
     }
@@ -53,17 +75,26 @@ export class PrismaPlayer implements PlayerRepo {
         const P = new PrismaClient()
         return await P.players
             .findFirst({
+                include: { stats: true },
                 where: {id: id}
             })
             .then(row => {
                 if(!row)
                     return undefined
 
+                const stats = row.stats!
+                const s = Stats.create({
+                    playerId: stats.player_id,
+                    gamePlayed: stats.game_played,
+                    wins: stats.game_played
+                }, stats.id)
+
                 return Player.create({
-                    username: row.username,
                     password: row.password,
-                    bio: row.bio,
-                    email: row.email,
+                    username: Handle.create(row.username),
+                    bio: Bio.create(row.bio),
+                    email: Email.create(row.email),
+                    stats: s
                 }, row.id)
             })
     }
@@ -72,17 +103,26 @@ export class PrismaPlayer implements PlayerRepo {
         const P = new PrismaClient()
         return await P.players
             .findFirst({
+                include: { stats: true },
                 where: {username: username}
             })
             .then(row => {
                 if(!row)
                     return undefined
 
+                const stats = row.stats!
+                const s = Stats.create({
+                    playerId: stats.player_id,
+                    gamePlayed: stats.game_played,
+                    wins: stats.game_played
+                }, stats.id)
+
                 return Player.create({
-                    username: row.username,
                     password: row.password,
-                    bio: row.bio,
-                    email: row.email,
+                    username: Handle.create(row.username),
+                    bio: Bio.create(row.bio),
+                    email: Email.create(row.email),
+                    stats: s
                 }, row.id)
             })
     }
@@ -91,30 +131,45 @@ export class PrismaPlayer implements PlayerRepo {
         const P = new PrismaClient()
         return await P.players
             .findFirst({
+                include: { stats: true },
                 where: {email: email}
             })
             .then(row => {
                 if(!row)
                     return undefined
 
+                const stats = row.stats!
+                const s = Stats.create({
+                    playerId: stats.player_id,
+                    gamePlayed: stats.game_played,
+                    wins: stats.game_played
+                }, stats.id)
+
                 return Player.create({
-                    username: row.username,
                     password: row.password,
-                    bio: row.bio,
-                    email: row.email,
+                    username: Handle.create(row.username),
+                    bio: Bio.create(row.bio),
+                    email: Email.create(row.email),
+                    stats: s
                 }, row.id)
             })
     }
 
-    async create(p: Player): Promise<number> {
+    async create(handle: Handle, password: string, email: Email, bio: Bio): Promise<number> {
         const P = new PrismaClient()
         return await P.players
             .create({
                 data: {
-                    email: p.email,
-                    username: p.username,
-                    password: p.password,
-                    bio: p.bio
+                    email: email.email,
+                    username: handle.name,
+                    password: password,
+                    bio: bio.content,
+                    stats: {
+                        create: {
+                            game_played: 0,
+                            wins: 0,
+                        }
+                    }
                 }
             })
             .then(row => row.id)

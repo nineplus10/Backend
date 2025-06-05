@@ -7,6 +7,9 @@ import { AppErr, AppError } from "_lib/Error/AppError";
 import { TokenHandler } from "_lib/TokenHandler/TokenHandler";
 import { PlayerRepo } from "account/repositories/Player";
 import { Session } from "account/domain/entities/Session";
+import { Handle } from "account/domain/values/handle";
+import { Email } from "account/domain/values/email";
+import { Bio } from "account/domain/values/bio";
 
 export class AuthService {
     constructor(
@@ -114,13 +117,12 @@ export class AuthService {
                 return this._hasher.generate(password)
             })
             .then(passDigest => {
-                const newPlayer = Player.create({
-                    username: username,
-                    password: passDigest,
-                    email: email,
-                    bio: ""
-                })
-                return this._playerRepo.create(newPlayer)
+                return this._playerRepo.create(
+                    Handle.create(username),
+                    passDigest,
+                    Email.create(email),
+                    Bio.create(""),
+                )
             })
     }
 

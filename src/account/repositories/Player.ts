@@ -1,10 +1,18 @@
 import { Player } from "account/domain/Player";
-import { Repository } from "../../_lib/Domain/_Repository";
+import { Repository } from "../../_lib/Domain/Repository";
 import { AuthRecord } from "account/domain/entities/AuthRecord";
 import { Session } from "account/domain/entities/Session";
+import { Handle } from "account/domain/values/handle";
+import { Email } from "account/domain/values/email";
+import { Bio } from "account/domain/values/bio";
 
 export interface PlayerRepo extends Repository<Player> {
-    create(p: Player): Promise<number>;
+    create(
+        handle: Handle,
+        password: string,
+        email: Email,
+        bio: Bio
+    ): Promise<number>;
     update(p: Player): Promise<void>;
 
     findByCredentials(username: string, email: string): Promise<Player | undefined>;
