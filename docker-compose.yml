@@ -19,7 +19,7 @@ services:
       AUTH_FAIL_COOLDOWN: ${AUTH_FAIL_COOLDOWN:-10}
 
       DB_URL: ${DB_URL:-postgresql://postgres:dont_you_have_something_better_to_do@db-main:5432/mydb?schema=public}
-      CACHE_URL: ${DB_URL:-redis://:dont_you_have_something_better_to_do@db-cache:6379/0}
+      CACHE_URL: ${CACHE_URL:-redis://:dont_you_have_something_better_to_do@db-cache:6379/0}
     depends_on:
       db-main:
         condition: service_healthy
