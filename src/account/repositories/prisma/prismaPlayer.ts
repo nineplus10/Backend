@@ -1,10 +1,10 @@
-import { AuthRecord } from "account/domain/entities/AuthRecord";
-import { Player } from "account/domain/Player";
+import { AuthRecord } from "account/domain/entities/authRecord";
+import { Player } from "account/domain/player";
 import { AppErr, AppError } from "_lib/Error/AppError";
-import { PlayerRepo } from "account/repositories/Player";
+import { PlayerRepo } from "account/repositories/player";
 import { PrismaClient } from "_lib/_generated/prisma";
-import { Session } from "account/domain/entities/Session";
-import { Stats } from "account/domain/entities/Stats";
+import { Session } from "account/domain/entities/session";
+import { Stats } from "account/domain/entities/stats";
 import { Handle } from "account/domain/values/handle";
 import { Bio } from "account/domain/values/bio";
 import { Email } from "account/domain/values/email";

@@ -1,12 +1,12 @@
-import { AuthRecord } from "account/domain/entities/AuthRecord";
-import { Player } from "account/domain/Player";
-import { AuthRateLimitService } from "account/domain/services/AuthRateLimitService";
-import { CredentialsService } from "account/domain/services/CredentialsService";
+import { AuthRecord } from "account/domain/entities/authRecord";
+import { Player } from "account/domain/player";
+import { AuthRateLimitService } from "account/domain/services/authRateLimitService";
+import { CredentialsService } from "account/domain/services/credentialsService";
 import { CryptoHandler } from "_lib/CryptoHandler/CryptoHandler";
 import { AppErr, AppError } from "_lib/Error/AppError";
 import { TokenHandler } from "_lib/TokenHandler/TokenHandler";
-import { PlayerRepo } from "account/repositories/Player";
-import { Session } from "account/domain/entities/Session";
+import { PlayerRepo } from "account/repositories/player";
+import { Session } from "account/domain/entities/session";
 import { Handle } from "account/domain/values/handle";
 import { Email } from "account/domain/values/email";
 import { Bio } from "account/domain/values/bio";

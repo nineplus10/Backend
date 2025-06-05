@@ -1,6 +1,6 @@
 import { AppErr, AppError } from "_lib/Error/AppError";
-import { Player } from "account/domain/Player";
-import { PlayerRepo } from "account/repositories/Player";
+import { Player } from "account/domain/player";
+import { PlayerRepo } from "account/repositories/player";
 
 export class ProfileService {
     constructor(

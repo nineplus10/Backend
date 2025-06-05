@@ -1,5 +1,5 @@
 import { gEnv } from "env";
-import { PlayerRepo } from "account/repositories/Player";
+import { PlayerRepo } from "account/repositories/player";
 
 const AUTH_MAX_FAIL = gEnv.AUTH_MAX_FAIL
 

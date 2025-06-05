@@ -1,6 +1,6 @@
 import { DomainErr, DomainError } from "_lib/Error/DomainError";
 import { Entity } from "../../_lib/Domain/Entity";
-import { Stats } from "./entities/Stats";
+import { Stats } from "./entities/stats";
 import { Bio } from "./values/bio";
 import { Email } from "./values/email";
 import { Handle } from "./values/handle";

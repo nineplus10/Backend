@@ -1,4 +1,4 @@
-import { PlayerRepo } from "account/repositories/Player";
+import { PlayerRepo } from "account/repositories/player";
 
 export class CredentialsService {
     static async getCredentialAvailability(

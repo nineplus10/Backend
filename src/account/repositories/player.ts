@@ -1,7 +1,7 @@
-import { Player } from "account/domain/Player";
+import { Player } from "account/domain/player";
 import { Repository } from "../../_lib/Domain/Repository";
-import { AuthRecord } from "account/domain/entities/AuthRecord";
-import { Session } from "account/domain/entities/Session";
+import { AuthRecord } from "account/domain/entities/authRecord";
+import { Session } from "account/domain/entities/session";
 import { Handle } from "account/domain/values/handle";
 import { Email } from "account/domain/values/email";
 import { Bio } from "account/domain/values/bio";

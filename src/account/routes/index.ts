@@ -1,7 +1,7 @@
 import express, { Response } from "express";
 import {AuthRouter } from "./auth";
 import { AuthController } from "account/controllers/authController";
-import { PrismaPlayer } from "account/repositories/prisma/PrismaPlayer";
+import { PrismaPlayer } from "account/repositories/prisma/prismaPlayer";
 import { AuthService } from "account/services/auth";
 import { Bcrypt } from "_lib/CryptoHandler/bcrypt";
 import { Jwt } from "_lib/TokenHandler/jwt";
