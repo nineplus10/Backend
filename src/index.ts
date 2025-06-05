@@ -2,7 +2,7 @@ import { ErrorHandler } from "_lib/Middlewares/ErrorHandler";
 import { Logger } from "_lib/Middlewares/Logger";
 import { v1AccountRouter } from "account/routes";
 import { gEnv } from "env";
-import express, { Response } from "express";
+import express, {Response } from "express";
 import { createServer } from "node:http";
 import { Server } from "socket.io";
 
@@ -18,6 +18,7 @@ xpress.use("/health", (_, res: Response, __) => {
     res.status(200)
         .send({ uptime: `${(Date.now() - upAt)/1000}s` })
 })
+
 xpress.use("/", (_, res: Response, __) => { res.status(404).send() })
 xpress.use(errorHandler.handle.bind(errorHandler))
 
