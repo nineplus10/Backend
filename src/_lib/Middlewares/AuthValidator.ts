@@ -1,10 +1,14 @@
 import { AppErr, AppError } from "_lib/Error/AppError";
-import { TokenAuth, TokenHandler } from "_lib/TokenHandler/TokenHandler";
+import { TokenHandler } from "_lib/TokenHandler/TokenHandler";
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 
 export interface AuthenticatedRequest extends Request {
-    user?: {id: number}
+    player?: {id: number}
+}
+
+interface AuthPayload {
+    playerId: number
 }
 
 export class AuthValidator {
@@ -20,9 +24,9 @@ export class AuthValidator {
         }
 
         this.handler
-            .decode<TokenAuth>(token)
+            .decode<AuthPayload>(token)
             .then(payload => {
-                req.user = {id: payload.id}
+                req.player = {id: payload.playerId}
                 next()
             })
             .catch(err => {

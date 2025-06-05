@@ -9,7 +9,7 @@ export class ProfileController {
 
     async getSelf(req: AuthenticatedRequest, res: Response, next: NextFunction) {
         await this._profileService
-            .getSelf(req.user!.id)
+            .getSelf(req.player!.id)
             .then(p => {
                 res.status(200)
                     .send({data: p})
