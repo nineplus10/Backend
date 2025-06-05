@@ -83,14 +83,9 @@ export class AuthController {
         await this._authService
             .register(data.username, data.email, data.password, data.rePassword)
             .then(_ => {
-                return this._authService
-                    .login(data.username, data.password, req.ip ?? "???", "")
-            })
-            .then(({accessT, refreshT}) => {
-                res.status(200) 
+                res.status(201) 
                     .send({
-                        accessToken: accessT,
-                        refreshToken: refreshT
+                        msg: "Account has successfully be saved. Login with the submitted credentials for access.",
                     })
             })
     }
