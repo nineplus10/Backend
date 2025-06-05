@@ -60,7 +60,7 @@ model players {
   matches_matches_winnerToplayers  matches[]       @relation("matches_winnerToplayers")
   player_badges                    player_badges[]
   sessions                         sessions[]
-  stats                            stats[]
+  stats                            stats?
 }
 
 model sessions {
@@ -76,7 +76,7 @@ model sessions {
 
 model stats {
   id          Int      @id @default(autoincrement())
-  player_id   Int
+  player_id   Int     @unique
   game_played Int
   wins        Int
   players     players @relation(fields: [player_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
