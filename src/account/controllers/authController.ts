@@ -3,6 +3,7 @@ import { AppErr, AppError } from "_lib/Error/AppError";
 import { ZodValidator } from "_lib/Validator/zod";
 import { AuthService } from "account/services/auth";
 import { z } from "zod";
+import { AuthenticatedRequest } from "_lib/Middlewares/AuthValidator";
 
 const LOGIN_PAYLOAD = z.object({
     username: z.string(),
@@ -34,35 +35,21 @@ export class AuthController {
                 AppErr.BadRequest,
                 validator.getErrMessage(error)))
 
+        const 
+            userIp = req.ip ?? "???",
+            userAgent = req.headers["user-agent"] ?? "???"
+
         // TODO: I wonder if there's a better way to send these tokens
         await this._authService
-            .login(data.username, data.password, req.ip ?? "???", "") // TODO: Acquire user agent info
-            .then(({accessT, refreshT}) => {
+            .login(data.username, data.password, userIp, userAgent)
+            .then(({access, refresh}) => {
                 res.status(200) 
                     .send({
-                        accessToken: accessT,
-                        refreshToken: refreshT
+                        accessToken: access,
+                        refreshToken: refresh
                     })
             })
-    }
-
-    async refreshLogin(req: Request, res: Response, next: NextFunction) {
-        if(!req.headers.authorization)
-            return next(
-                new AppError(
-                    AppErr.BadRequest,
-                    "Access token not found"
-                ))
-
-        await this._authService
-            .refreshLogin(req.headers.authorization)
-            .then(token => {
-                res.status(200)
-                    .set({
-                        authorization: token
-                    })
-                    .send()
-            })
+            .catch(err => next(err))
     }
 
     async register(req: Request, res: Response, next: NextFunction) {
@@ -88,5 +75,44 @@ export class AuthController {
                         msg: "Account has successfully be saved. Login with the submitted credentials for access.",
                     })
             })
+            .catch(err => next(err))
+    }
+
+    async refresh(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+        const 
+            userId = req.player?.id ?? -1,
+            refreshToken = req.body["refresh_token"],
+            userAgent = req.headers["user-agent"] ?? ""
+
+        if(!refreshToken)
+            return next(
+                new AppError(
+                    AppErr.BadRequest,
+                    "Refresh token not found"
+                ))
+
+        await this._authService
+            .refresh(userId, refreshToken, userAgent)
+            .then(({access, refresh}) => {
+                res.status(200) 
+                    .send({
+                        accessToken: access,
+                        refreshToken: refresh
+                    })
+            })
+            .catch(err => next(err))
+    }
+
+    async revoke(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+        const 
+            userId = req.player?.id ?? -1,
+            userAgent = req.headers["user-agent"] ?? ""
+
+        await this._authService
+            .revoke(userId, userAgent)
+            .then(_ => {
+                res.status(204).send()
+            })
+            .catch(err => next(err))
     }
 }

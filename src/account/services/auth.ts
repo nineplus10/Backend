@@ -10,10 +10,13 @@ import { Session } from "account/domain/entities/session";
 import { Handle } from "account/domain/values/handle";
 import { Email } from "account/domain/values/email";
 import { Bio } from "account/domain/values/bio";
+import { ValkeySession } from "account/repositories/valkey/valkeySession";
 
+type TokenPair = {refresh: string, access: string};
 export class AuthService {
     constructor(
         private readonly _playerRepo: PlayerRepo,
+        private readonly _sessionCache: ValkeySession,
         private readonly _hasher: CryptoHandler,
         private readonly _accessTokenHandler: TokenHandler,
         private readonly _refreshTokenHandler: TokenHandler
@@ -24,9 +27,9 @@ export class AuthService {
         password: string,
         origin: string,
         userAgent: string,
-    ): Promise< {refreshT: string, accessT: string} > {
+    ): Promise<TokenPair> {
         let player: Player;
-        let tokenPair: {refreshT: string, accessT: string};
+        let tokens: TokenPair
 
         return await AuthRateLimitService
             .calculateOriginBackoff(this._playerRepo, origin) // TODO: Perhaps this could be made into a middleware for generalization?
@@ -79,7 +82,7 @@ export class AuthService {
                 ])
             })
             .then(([refreshToken, accessToken]) => {
-                tokenPair = { refreshT: refreshToken, accessT: accessToken }
+                tokens = { refresh: refreshToken, access: accessToken }
                 return this._hasher.generate(refreshToken)
             })
             .then(refreshDigest => {
@@ -90,9 +93,10 @@ export class AuthService {
                     token: refreshDigest,
                     issuedAt: new Date()
                 })
-                return this._playerRepo.initiateSession(s)
+                return this._sessionCache
+                    .create(s)
             })
-            .then(_ => tokenPair)
+            .then(_ => tokens)
     }
 
     async register(
@@ -126,15 +130,68 @@ export class AuthService {
             })
     }
 
-    async refreshLogin(
-        token: string
-    ): Promise< ReturnType< typeof this._accessTokenHandler.encode > | undefined > {
-        return await this._playerRepo
-            .checkSession(token)
-            .then(s => {
-                if(!s)
-                    return undefined
-                return s.token
+    async refresh(
+        playerId: number,
+        token: string,
+        userAgent: string,
+        _: string = "" // Future feature: Origin
+    ): Promise<TokenPair> {
+        let activeSession: Session
+        let newTokens: TokenPair
+
+        return await this._sessionCache
+            .find(playerId, userAgent)
+            .then(session => {
+                if(!session)
+                    throw new AppError(
+                        AppErr.Unauthorized,
+                        "No active session found for this user")
+                
+                const hadRevoked =
+                    session.revokedAt 
+                    && Date.now() > session.revokedAt.getTime()
+                if(hadRevoked)
+                    throw new AppError(
+                        AppErr.Unauthorized,
+                        "Session has terminated, please login")
+
+                activeSession = session
+                return this._hasher.compare(token, session.token)
             })
+            .then(ok => {
+                if(!ok)
+                    throw new AppError(
+                        AppErr.Unauthorized,
+                        "Token is invalid for this session")
+
+                return Promise.all([
+                    this._refreshTokenHandler.encode({}),
+                    this._accessTokenHandler.encode({ playerId: playerId })
+                ])
+            })
+            .then(([refreshToken, accessToken]) => {
+                newTokens = { refresh: refreshToken, access: accessToken }
+                return this._hasher.generate(refreshToken)
+            })
+            .then(refreshDigest => {
+                const s = Session.create({
+                    playerId: playerId,
+                    origin: activeSession.origin,
+                    userAgent: activeSession.userAgent,
+                    token: refreshDigest,
+                    issuedAt: new Date()
+                })
+                return this._sessionCache.create(s)
+            })
+            .then(_ => newTokens)
+    }
+
+    async revoke(
+        playerId: number,
+        userAgent: string,
+        _: string = "" // Future feature: Origin
+    ): Promise<void> {
+        return await this._sessionCache
+            .revoke(playerId, userAgent)
     }
 }

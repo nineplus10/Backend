@@ -1,6 +1,17 @@
 import { gEnv } from "env";
 import valkey  from "iovalkey";
 
+// // Make hgetall result to be an object
+// valkey.Command.setReplyTransformer("hgetall", (result) => {
+//     const res: {[prop: string]: any} = {}
+//     for(let i = 0; i < result.length; i += 2) {
+//         const key: string = result[i]
+//         const value = result[i + 1]
+//         res[key] = value
+//     }
+//     return res
+// })
+
 export class Valkey{
     private readonly _conn: valkey
 

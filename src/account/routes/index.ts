@@ -10,15 +10,20 @@ import { ProfileService } from "account/services/profile";
 import { ProfileController } from "account/controllers/profileController";
 import { ProfileRouter } from "./profile";
 import { AuthValidator } from "_lib/Middlewares/AuthValidator";
+import { ValkeySession } from "account/repositories/valkey/valkeySession";
+import { Valkey } from "_lib/Persistence/Valkey";
 
+const vk = new Valkey() // TODO: refactor
 const upAt = Date.now()
 const tokenParser = new BearerParser()
 const authValidator = new AuthValidator(new Jwt("access", tokenParser))
 
 const playerRepo = new PrismaPlayer()
+const sessionCache = new ValkeySession(vk.conn)
 
 const authService = new AuthService(
                         playerRepo, 
+                        sessionCache,
                         new Bcrypt(), 
                         new Jwt("access", tokenParser),
                         new Jwt("refresh", tokenParser))
@@ -28,7 +33,7 @@ const authController = new AuthController(authService)
 const profileController = new ProfileController(profileService)
 
 const profileRouter = new ProfileRouter(profileController, authValidator)
-const authRouter = new AuthRouter(authController)
+const authRouter = new AuthRouter(authController, authValidator)
 const v1AccountRouter = express.Router()
 v1AccountRouter.use("/auth", authRouter.router)
 v1AccountRouter.use("/profile", profileRouter.router)
