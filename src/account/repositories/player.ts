@@ -1,7 +1,6 @@
 import { Player } from "account/domain/player";
 import { Repository } from "../../_lib/Domain/Repository";
 import { AuthRecord } from "account/domain/entities/authRecord";
-import { Session } from "account/domain/entities/session";
 import { Handle } from "account/domain/values/handle";
 import { Email } from "account/domain/values/email";
 import { Bio } from "account/domain/values/bio";
@@ -24,8 +23,4 @@ export interface PlayerRepo extends Repository<Player> {
     addAuthAttempt(a: AuthRecord): Promise<number>;
     findLastNAttempt(userId: number, n: number): Promise<AuthRecord[]>
     findLastNAttemptByOrigin( origin: string, n: number): Promise<AuthRecord[]>
-
-    // Session
-    initiateSession(s: Session): Promise<void>
-    checkSession(sessionToken: string): Promise<Session | undefined>
 }

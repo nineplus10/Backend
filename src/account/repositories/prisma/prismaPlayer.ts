@@ -3,7 +3,6 @@ import { Player } from "account/domain/player";
 import { AppErr, AppError } from "_lib/Error/AppError";
 import { PlayerRepo } from "account/repositories/player";
 import { PrismaClient } from "_lib/_generated/prisma";
-import { Session } from "account/domain/entities/session";
 import { Stats } from "account/domain/entities/stats";
 import { Handle } from "account/domain/values/handle";
 import { Bio } from "account/domain/values/bio";
@@ -235,45 +234,5 @@ export class PrismaPlayer implements PlayerRepo {
                 }
             })
             .then(row => row.id)
-    }
-
-    ////////////////////////////////
-    // Sessions
-    ////////////////////////////////
-    async checkSession(token: string): Promise<Session | undefined> {
-        const P = new PrismaClient()
-        return await P.sessions
-            .findFirst({
-                where: {token: token},
-                orderBy: { issued_at: "desc" }
-            })
-            .then(row => {
-                if(!row)
-                    return undefined
-
-                return Session.create({
-                    playerId: row.player_id,
-                    origin: row.origin,
-                    userAgent: row.user_agent,
-                    token: row.token,
-                    issuedAt: row.issued_at,
-                    revokedAt: row.revoked_at ?? undefined
-                })
-            })
-    }
-
-    async initiateSession(s: Session): Promise<void> {
-        const P = new PrismaClient()
-        await P.sessions
-            .create({
-                data: {
-                    player_id: s.playerId,
-                    origin: s.origin,
-                    user_agent: s.userAgent,
-                    token: s.token,
-                    issued_at: s.issuedAt,
-                    revoked_at: s.revokedAt
-                }
-            })
     }
 }
