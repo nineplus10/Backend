@@ -1,6 +1,6 @@
-import { AuthenticatedRequest } from "_lib/Middlewares/AuthValidator";
+import { AuthenticatedRequest } from "_lib/Middlewares/AuthChecker";
 import { ProfileService } from "account/services/profile";
-import { NextFunction, Request, Response } from "express";
+import { NextFunction, Response } from "express";
 
 export class ProfileController {
     constructor(

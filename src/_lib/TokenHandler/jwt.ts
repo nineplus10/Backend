@@ -36,7 +36,7 @@ export class Jwt implements TokenHandler {
         })
     }
 
-    async decode<T extends JwtPayload>(
+    decode<T extends JwtPayload>(
         token: string, 
         ignoreInvalid: boolean = false
     ): Promise<T> {

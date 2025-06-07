@@ -3,7 +3,7 @@ import { AppErr, AppError } from "_lib/Error/AppError";
 import { ZodValidator } from "_lib/Validator/zod";
 import { AuthService } from "account/services/auth";
 import { z } from "zod";
-import { AuthenticatedRequest } from "_lib/Middlewares/AuthValidator";
+import { AuthenticatedRequest } from "_lib/Middlewares/AuthChecker";
 
 const LOGIN_PAYLOAD = z.object({
     username: z.string(),

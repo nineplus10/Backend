@@ -9,7 +9,7 @@ import { BearerParser } from "_lib/TokenHandler/TokenParser/bearer";
 import { ProfileService } from "account/services/profile";
 import { ProfileController } from "account/controllers/profileController";
 import { ProfileRouter } from "./profile";
-import { AuthValidator } from "_lib/Middlewares/AuthValidator";
+import { AuthChecker } from "_lib/Middlewares/AuthChecker";
 import { ValkeySession } from "account/repositories/valkey/valkeySession";
 import { Valkey } from "_lib/Persistence/Valkey";
 
@@ -21,7 +21,7 @@ export class AccountRouterV1 {
         this._upAt = Date.now()
 
         const tokenParser = new BearerParser()
-        const authValidator = new AuthValidator(new Jwt("access", tokenParser))
+        const authValidator = new AuthChecker(new Jwt("access", tokenParser))
 
         const playerRepo = new PrismaPlayer()
         const sessionCache = new ValkeySession(vk.conn)

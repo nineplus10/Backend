@@ -1,4 +1,4 @@
-import { AuthValidator } from "_lib/Middlewares/AuthValidator";
+import { AuthChecker } from "_lib/Middlewares/AuthChecker";
 import { AuthController } from "account/controllers/authController";
 import express, { Router } from "express";
 
@@ -6,7 +6,7 @@ export class AuthRouter {
     private _router: Router
     constructor(
         authController: AuthController,
-        authValidator: AuthValidator
+        authValidator: AuthChecker
     ) {
         this._router = express.Router()
         this._router.post("/login", authController.login.bind(authController))
