@@ -5,9 +5,7 @@
 >
 > ~ An excerpt from a once-well-known piece of internet culture
 
-## About
-
-This repo holds the brain of the game! And... also other supporting functionalities
+This repo holds the brain of the game! and... its supporting functionalities
 
 ## Feature Roadmap
 
@@ -26,3 +24,9 @@ This repo holds the brain of the game! And... also other supporting functionalit
 ![Valkey](https://img.shields.io/badge/Valkey-677EF6?style=for-the-badge)
 ![Postgres](https://img.shields.io/badge/postgres-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white)
 ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
+
+## Documentation
+
+Check this [documentation](https://82kin4x1s8.apidog.io) for the reference on consuming the API. It isn't usable on the documentation platform since the server hasn't been hosted anywhere, but hey, at least it could provide clues on what to expect.
+
+> Documentation on design choices and reasoning coming soon!
