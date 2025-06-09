@@ -35,4 +35,6 @@ export class Player extends Entity<PlayerProps> {
     get email(): Email {return this._props.email}
     get bio(): Bio {return this._props.bio}
     get stats(): Stats {return this._props.stats}
+
+    set bio(b: Bio) {this._props.bio = b}
 }

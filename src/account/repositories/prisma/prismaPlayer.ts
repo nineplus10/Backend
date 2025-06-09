@@ -1,6 +1,5 @@
 import { AuthRecord } from "account/domain/entities/authRecord";
 import { Player } from "account/domain/player";
-import { AppErr, AppError } from "_lib/Error/AppError";
 import { PlayerRepo } from "account/repositories/player";
 import { PrismaClient } from "_lib/_generated/prisma";
 import { Stats } from "account/domain/entities/stats";
@@ -175,11 +174,19 @@ export class PrismaPlayer implements PlayerRepo {
     }   
 
     async update(p: Player): Promise<void> {
-        throw new AppError( AppErr.NotImplemented, "PrismaPlayer<update>")
+        const P = new PrismaClient()
+        await P.players
+            .update({
+                where: {id: p.id!},
+                data: {
+                    bio: p.bio.content,
+                }
+            })
     }
 
     ////////////////////////////////
     // Auth Record
+    // TODO: consider moving it to cache instead
     ////////////////////////////////
     async findLastNAttempt(playerId: number, n: number): Promise<AuthRecord[]> {
         const P = new PrismaClient()
@@ -221,7 +228,6 @@ export class PrismaPlayer implements PlayerRepo {
             ))
     }
 
-    // TODO: consider moving it to cache instead
     async addAuthAttempt(a: AuthRecord): Promise<number> {
         const P = new PrismaClient()
         return await P.auth_records
