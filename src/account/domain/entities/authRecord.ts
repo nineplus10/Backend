@@ -29,8 +29,8 @@ export class AuthRecord extends Entity<AuthRecordProps>{
         return diff > 0? Math.floor(diff / MS_IN_MIN) : 0
     }
 
-    get isOk(): boolean {return this._props.isOk}
-    get attemptedAt(): Date {return this._props.attemptedAt}
-    get origin(): string {return this._props.origin}
-    get playerId(): number {return this._props.playerId}
+    get isOk(): AuthRecordProps["isOk"] {return this._props.isOk}
+    get attemptedAt(): AuthRecordProps["attemptedAt"] {return this._props.attemptedAt}
+    get origin(): AuthRecordProps["origin"] {return this._props.origin}
+    get playerId(): AuthRecordProps["playerId"] {return this._props.playerId}
 }

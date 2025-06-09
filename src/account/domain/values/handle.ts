@@ -33,5 +33,5 @@ export class Handle extends Value<HandleProps> {
         return new Handle(data)
     }
 
-    get name(): string {return this._props.name}
+    get name(): HandleProps["name"] {return this._props.name}
 }

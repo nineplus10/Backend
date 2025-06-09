@@ -19,10 +19,10 @@ export class Session extends Entity<SessionProps> {
         return new Session(props, id)
     }
 
-    get playerId(): number {return this._props.playerId}
-    get origin(): string {return this._props.origin}
-    get userAgent(): string {return this._props.userAgent}
-    get token(): string {return this._props.token}
-    get issuedAt(): Date {return this._props.issuedAt}
-    get revokedAt(): Date | undefined {return this._props.revokedAt}
+    get playerId(): SessionProps["playerId"] {return this._props.playerId}
+    get origin(): SessionProps["origin"] {return this._props.origin}
+    get userAgent(): SessionProps["userAgent"] {return this._props.userAgent}
+    get token(): SessionProps["token"] {return this._props.token}
+    get issuedAt(): SessionProps["issuedAt"] {return this._props.issuedAt}
+    get revokedAt(): SessionProps["revokedAt"] | undefined {return this._props.revokedAt}
 }

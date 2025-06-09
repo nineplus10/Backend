@@ -32,5 +32,5 @@ export class Bio extends Value<BioProps> {
         return new Bio(data)
     }
 
-    get content(): string {return this._props.content}
+    get content(): BioProps["content"] {return this._props.content}
 }

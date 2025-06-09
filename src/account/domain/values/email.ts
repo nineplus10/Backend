@@ -32,5 +32,5 @@ export class Email extends Value<EmailProps> {
         return new Email(data)
     }
 
-    get email(): string { return this._props.email }
+    get email(): EmailProps["email"] { return this._props.email }
 }

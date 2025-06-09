@@ -20,7 +20,7 @@ export class Stats extends Entity<StatsProps> {
         return this.gamePlayed / this.wins
     }
 
-    get playerId(): number {return this._props.playerId}
-    get gamePlayed(): number {return this._props.gamePlayed}
-    get wins(): number {return this._props.wins}
+    get playerId(): StatsProps["playerId"] {return this._props.playerId}
+    get gamePlayed(): StatsProps["gamePlayed"] {return this._props.gamePlayed}
+    get wins(): StatsProps["wins"] {return this._props.wins}
 }

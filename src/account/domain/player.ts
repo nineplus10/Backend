@@ -30,11 +30,11 @@ export class Player extends Entity<PlayerProps> {
     }
 
     static get __name(): string {return Player._name}
-    get username(): Handle {return this._props.username}
-    get password(): string {return this._props.password}
-    get email(): Email {return this._props.email}
-    get bio(): Bio {return this._props.bio}
-    get stats(): Stats {return this._props.stats}
+    get username(): PlayerProps["username"] {return this._props.username}
+    get password(): PlayerProps["password"] {return this._props.password}
+    get email(): PlayerProps["email"] {return this._props.email}
+    get bio(): PlayerProps["bio"] {return this._props.bio}
+    get stats(): PlayerProps["stats"] {return this._props.stats}
 
-    set bio(b: Bio) {this._props.bio = b}
+    set bio(b: PlayerProps["bio"]) {this._props.bio = b}
 }
