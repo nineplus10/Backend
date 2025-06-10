@@ -1,7 +1,6 @@
 import { ErrorHandler } from "_lib/Middlewares/ErrorHandler";
 import { Logger } from "_lib/Middlewares/Logger";
 import { Valkey } from "_lib/Persistence/Valkey";
-import { SocketIoApp } from "_lib/Websocket/socketio";
 import { AccountRouterV1 } from "account/routes";
 import { gEnv } from "env";
 import express, {Response } from "express";
@@ -16,16 +15,15 @@ const xpress = express()
 
 xpress.use(loggerMiddleware.handle.bind(loggerMiddleware))
 xpress.use(express.urlencoded({extended: false}))
+
 xpress.use("/api/account/v1", accountRouter.router)
 xpress.use("/health", (_, res: Response, __) => { 
     res.status(200)
         .send({ uptime: `${(Date.now() - upAt)/1000}s` })
 })
-
 xpress.use("/", (_, res: Response, __) => { res.status(404).send() })
 xpress.use(errorHandler.handle.bind(errorHandler))
 
-const srv = new SocketIoApp(xpress)
-srv.server.listen(gEnv.PORT, () => {
+xpress.listen(gEnv.PORT, () => {
     console.log(`Up and running on ${gEnv.PORT}`)
 })
