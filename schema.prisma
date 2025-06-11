@@ -9,7 +9,7 @@ datasource db {
 }
 
 model auth_records {
-  id           Int       @id @default(autoincrement())
+  id           Int      @id @default(autoincrement())
   player_id    Int
   origin       String   @db.Inet
   attempted_at DateTime @db.Timestamp(6)
@@ -19,28 +19,25 @@ model auth_records {
 
 model badges {
   id               Int             @id @default(autoincrement())
-  name             String         @db.VarChar(127)
-  description      String         @db.VarChar(511)
+  name             String          @db.VarChar(127)
+  description      String          @db.VarChar(511)
   acquisition_info String
   player_badges    player_badges[]
 }
 
 model matches {
-  id                               Int      @id @default(autoincrement())
+  id                               Int            @id @default(autoincrement())
   player1                          Int
   player2                          Int
-  winner                           Int
-  start_time                       DateTime @default(now()) @db.Timestamp(6)
-  end_time                         DateTime @db.Timestamp(6)
-  game_log                         String   @db.VarChar(15)
-  chat_log                         String  @db.VarChar(15)
-  players_matches_player1Toplayers players  @relation("matches_player1Toplayers", fields: [player1], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  players_matches_player2Toplayers players  @relation("matches_player2Toplayers", fields: [player2], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  players_matches_winnerToplayers  players @relation("matches_winnerToplayers", fields: [winner], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  result_id                        Int?           @unique
+  start                            DateTime       @db.Timestamp(6)
+  players_matches_player1Toplayers players        @relation("matches_player1Toplayers", fields: [player1], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  players_matches_player2Toplayers players        @relation("matches_player2Toplayers", fields: [player2], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  match_results                    match_results? @relation(fields: [result_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "matches_resultid_fkey")
 }
 
 model player_badges {
-  id           Int      @id @default(autoincrement())
+  id           Int     @id @default(autoincrement())
   player_id    Int
   badge_id     Int
   obtain_count Int
@@ -55,9 +52,9 @@ model players {
   password                         String
   bio                              String
   auth_records                     auth_records[]
+  match_results                    match_results[]
   matches_matches_player1Toplayers matches[]       @relation("matches_player1Toplayers")
   matches_matches_player2Toplayers matches[]       @relation("matches_player2Toplayers")
-  matches_matches_winnerToplayers  matches[]       @relation("matches_winnerToplayers")
   player_badges                    player_badges[]
   sessions                         sessions[]
   stats                            stats?
@@ -66,18 +63,28 @@ model players {
 model sessions {
   id         Int       @id @default(autoincrement())
   player_id  Int
-  origin     String   @db.Inet
-  user_agent String   @db.VarChar(63)
-  token      String   @db.VarChar(127)
-  issued_at  DateTime @db.Timestamp(6)
+  origin     String    @db.Inet
+  user_agent String    @db.VarChar(63)
+  token      String    @db.VarChar(127)
+  issued_at  DateTime  @db.Timestamp(6)
   revoked_at DateTime? @db.Timestamp(6)
-  players    players  @relation(fields: [player_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  players    players   @relation(fields: [player_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model stats {
-  id          Int      @id @default(autoincrement())
+  id          Int     @id @default(autoincrement())
   player_id   Int     @unique
   game_played Int
   wins        Int
   players     players @relation(fields: [player_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model match_results {
+  id        Int      @id(map: "match_result_pkey") @default(autoincrement())
+  winner_id Int
+  game_log  String   @db.VarChar(15)
+  chat_log  String   @db.VarChar(15)
+  end       DateTime @db.Timestamp(6)
+  players   players  @relation(fields: [winner_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "match_result_winner_id_fkey")
+  matches   matches?
 }
