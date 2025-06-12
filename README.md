@@ -12,6 +12,7 @@ This repo holds the brain of the game! and... its supporting functionalities
 - [ ] Core game
 - [ ] Leaderboard
 - [ ] Spectactor chat
+- [ ] Match Playback (Replay)
 - [ ] Custom room
 
 ## Tech Stack
