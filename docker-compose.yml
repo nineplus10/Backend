@@ -7,19 +7,19 @@ services:
     volumes:
       - ./:/app
     environment:
-      APP_ENV: ${APP_ENV:-DEVEL}
-      APP_PORT: ${APP_PORT:-8000}
+      ACC_APP_ENV: ${APP_ENV:-DEVEL}
+      ACC_APP_PORT: ${APP_PORT:-8000}
 
-      ACCESS_TOKEN_SECRET: ${ACCESS_TOKEN_SECRET:-you_wouldnt_guess_it}
-      ACCESS_TOKEN_LIFETIME: ${ACCESS_TOKEN_LIFETIME:-10}
-      REFRESH_TOKEN_SECRET: ${REFRESH_TOKEN_SECRET:-quit_it_its_no_use}
-      REFRESH_TOKEN_LIFETIME: ${REFRESH_TOKEN_LIFETIME:-10}
+      ACC_ACCESS_TOKEN_SECRET: ${ACCESS_TOKEN_SECRET:-you_wouldnt_guess_it}
+      ACC_ACCESS_TOKEN_LIFETIME: ${ACCESS_TOKEN_LIFETIME:-10}
+      ACC_REFRESH_TOKEN_SECRET: ${REFRESH_TOKEN_SECRET:-quit_it_its_no_use}
+      ACC_REFRESH_TOKEN_LIFETIME: ${REFRESH_TOKEN_LIFETIME:-10}
 
-      AUTH_MAX_FAIL: ${AUTH_MAX_FAIL:-3}
-      AUTH_FAIL_COOLDOWN: ${AUTH_FAIL_COOLDOWN:-10}
+      ACC_AUTH_MAX_FAIL: ${AUTH_MAX_FAIL:-3}
+      ACC_AUTH_FAIL_COOLDOWN: ${AUTH_FAIL_COOLDOWN:-10}
 
-      DB_URL: ${DB_URL:-postgresql://postgres:dont_you_have_something_better_to_do@db-main:5432/mydb?schema=public}
-      CACHE_URL: ${CACHE_URL:-redis://:dont_you_have_something_better_to_do@db-cache:6379/0}
+      ACC_DB_URL: ${DB_URL:-postgresql://postgres:dont_you_have_something_better_to_do@db-main:5432/mydb?schema=public}
+      ACC_CACHE_URL: ${CACHE_URL:-redis://:dont_you_have_something_better_to_do@db-cache:6379/0}
     depends_on:
       db-main:
         condition: service_healthy
