@@ -38,7 +38,7 @@ export class AccountModule {
 
     listen(port: number): ReturnType<typeof this._app.listen> {
         return this._app.listen(port, () => {
-            console.log(`Up and running on ${port}`)
+            console.log(`[Account] Up and running on ${port}`)
         })
     }
 

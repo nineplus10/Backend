@@ -7,7 +7,6 @@ const MS_IN_MIN = 1000 * 60
 
 const validator = z.object({
     ENV: z.string(),
-    PORT: z.coerce.number().positive().max(65535),
 
     AUTH_MAX_FAIL: z.coerce.number().positive(),
     AUTH_FAIL_COOLDOWN: z.coerce.number().positive(),
@@ -22,7 +21,7 @@ const validator = z.object({
 })
 
 const accountEnv = validator.parse({
-    ACC_ENV: process.env.ACC_APP_ENV,
+    ENV: process.env.ACC_APP_ENV,
 
     ACCESS_TOKEN_SECRET: process.env.ACC_ACCESS_TOKEN_SECRET,
     ACCESS_TOKEN_LIFETIME: process.env.ACC_ACCESS_TOKEN_LIFETIME,
