@@ -1,4 +1,3 @@
-import { gEnv } from "env";
 import valkey  from "iovalkey";
 
 // // Make hgetall result to be an object
@@ -15,8 +14,8 @@ import valkey  from "iovalkey";
 export class Valkey{
     private readonly _conn: valkey
 
-    constructor() {
-        this._conn = new valkey(gEnv.CACHE_URL)
+    constructor(url: string) {
+        this._conn = new valkey(url)
         // TODO: gracefully exit when initial connection has failed
     }
 

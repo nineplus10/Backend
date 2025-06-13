@@ -1,4 +1,4 @@
-import { gEnv } from "env";
+import { accountEnv } from "account/env";
 import { Entity } from "../../../_lib/Domain/Entity";
 
 interface AuthRecordProps {
@@ -11,7 +11,7 @@ interface AuthRecordProps {
 const MS_IN_MIN = 1000 * 60
 
 export class AuthRecord extends Entity<AuthRecordProps>{
-    private static readonly _COOLDOWN_PERIOD = gEnv.AUTH_FAIL_COOLDOWN
+    private static readonly _COOLDOWN_PERIOD = accountEnv.AUTH_FAIL_COOLDOWN
 
     private constructor(props: AuthRecordProps, id?: number) {
         super(props, id)

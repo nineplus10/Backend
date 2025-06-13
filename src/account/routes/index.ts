@@ -12,6 +12,7 @@ import { ProfileRouter } from "./profile";
 import { AuthChecker } from "_lib/Middlewares/AuthChecker";
 import { ValkeySession } from "account/repositories/valkey/valkeySession";
 import { Valkey } from "_lib/Persistence/Valkey";
+import { accountEnv } from "account/env";
 
 export class AccountRouterV1 {
     private readonly _router: Router
@@ -21,7 +22,10 @@ export class AccountRouterV1 {
         this._upAt = Date.now()
 
         const tokenParser = new BearerParser()
-        const authValidator = new AuthChecker(new Jwt("access", tokenParser))
+        const authValidator = new AuthChecker(
+                                new Jwt( accountEnv.ACCESS_TOKEN_SECRET,
+                                        accountEnv.ACCESS_TOKEN_LIFETIME,
+                                        tokenParser))
 
         const playerRepo = new PrismaPlayer()
         const sessionCache = new ValkeySession(vk.conn)
@@ -30,8 +34,12 @@ export class AccountRouterV1 {
                                 playerRepo, 
                                 sessionCache,
                                 new Bcrypt(), 
-                                new Jwt("access", tokenParser),
-                                new Jwt("refresh", tokenParser))
+                                new Jwt( accountEnv.ACCESS_TOKEN_SECRET,
+                                        accountEnv.ACCESS_TOKEN_LIFETIME,
+                                        tokenParser),
+                                new Jwt( accountEnv.REFRESH_TOKEN_SECRET,
+                                        accountEnv.REFRESH_TOKEN_LIFETIME,
+                                        tokenParser))
         const profileService = new ProfileService(playerRepo)
 
         const authController = new AuthController(authService)

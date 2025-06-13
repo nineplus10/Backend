@@ -1,7 +1,7 @@
-import { gEnv } from "env";
+import { accountEnv } from "account/env";
 import { PlayerRepo } from "account/repositories/player";
 
-const AUTH_MAX_FAIL = gEnv.AUTH_MAX_FAIL
+const AUTH_MAX_FAIL = accountEnv.AUTH_MAX_FAIL
 
 export class AuthRateLimitService {
     static async calculateOriginBackoff(

@@ -5,4 +5,4 @@ import { gEnv } from "env";
 // as I'm not knowledgeable enough to use this term
 const accountModule = new AccountModule()
 
-accountModule.listen(gEnv.PORT)
+accountModule.listen(gEnv.ACC_PORT)

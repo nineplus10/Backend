@@ -7,5 +7,4 @@ COPY package.json ./
 
 RUN npm install --verbose
 
-EXPOSE 7788
 ENTRYPOINT "./docker-entrypoint.sh"

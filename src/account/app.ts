@@ -5,13 +5,14 @@ import { Valkey } from "_lib/Persistence/Valkey";
 import { Logger } from "_lib/Middlewares/Logger";
 import { ErrorHandler } from "_lib/Middlewares/ErrorHandler";
 import { AccountRouterV1 } from "./routes";
+import { accountEnv } from "./env";
 
 export class AccountModule {
     _app: e.Express
 
     constructor() {
         const upAt = Date.now()
-        const vkConn = new Valkey()
+        const vkConn = new Valkey(accountEnv.CACHE_URL)
         const loggerMiddleware = new Logger()
         const errorHandler = new ErrorHandler()
 
