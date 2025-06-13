@@ -1,6 +1,7 @@
 import { Session } from "account/domain/entities/session";
 import { gEnv } from "env";
 import valkey from "iovalkey";
+import { SessionCache } from "../player";
 
 const SESSION_TTL = gEnv.REFRESH_TOKEN_LIFETIME / 1000
 const S_IN_MONTH = 60*60*24*30
@@ -25,7 +26,7 @@ type PayloadContent = {
 
 type Payload = { [P in PayloadProps as P]: PayloadContent[P] }
 
-export class ValkeySession {
+export class ValkeySession implements SessionCache {
     constructor(
         private readonly _conn: valkey
     ) {}

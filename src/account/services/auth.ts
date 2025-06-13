@@ -5,18 +5,17 @@ import { CredentialsService } from "account/domain/services/credentialsService";
 import { CryptoHandler } from "_lib/CryptoHandler/CryptoHandler";
 import { AppErr, AppError } from "_lib/Error/AppError";
 import { TokenHandler } from "_lib/TokenHandler/TokenHandler";
-import { PlayerRepo } from "account/repositories/player";
+import { PlayerRepo, SessionCache } from "account/repositories/player";
 import { Session } from "account/domain/entities/session";
 import { Handle } from "account/domain/values/handle";
 import { Email } from "account/domain/values/email";
 import { Bio } from "account/domain/values/bio";
-import { ValkeySession } from "account/repositories/valkey/valkeySession";
 
 type TokenPair = {refresh: string, access: string};
 export class AuthService {
     constructor(
         private readonly _playerRepo: PlayerRepo,
-        private readonly _sessionCache: ValkeySession,
+        private readonly _sessionCache: SessionCache,
         private readonly _hasher: CryptoHandler,
         private readonly _accessTokenHandler: TokenHandler,
         private readonly _refreshTokenHandler: TokenHandler
