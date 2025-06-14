@@ -26,6 +26,16 @@ This repo holds the brain of the game! and... its supporting functionalities
 ![Postgres](https://img.shields.io/badge/postgres-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white)
 ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 
+## Cloning
+
+If you don't want wire up the dependencies (db, message brokers, etc.) yourself, you could use Docker to spin up the development setup I use. 
+
+```
+docker compose up
+```
+
+> For running the first time, please prepare a good Internet connection as some docker images needed to be downloaded
+
 ## Documentation
 
 Check this [documentation](https://82kin4x1s8.apidog.io) for the reference on consuming the API. It isn't usable on the documentation platform since the server hasn't been hosted anywhere, but hey, at least it could provide clues on what to expect.
