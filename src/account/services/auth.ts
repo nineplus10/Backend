@@ -76,7 +76,7 @@ export class AuthService {
                         "Password doesn't match")
 
                 return Promise.all([
-                    this._refreshTokenHandler.encode({}),
+                    this._refreshTokenHandler.encode({playerId: player.id}),
                     this._accessTokenHandler.encode({ playerId: player.id })
                 ])
             })
@@ -164,7 +164,7 @@ export class AuthService {
                         "Token is invalid for this session")
 
                 return Promise.all([
-                    this._refreshTokenHandler.encode({}),
+                    this._refreshTokenHandler.encode({playerId: playerId}),
                     this._accessTokenHandler.encode({ playerId: playerId })
                 ])
             })

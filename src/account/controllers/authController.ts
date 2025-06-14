@@ -4,6 +4,7 @@ import { ZodValidator } from "_lib/Validator/zod";
 import { AuthService } from "account/services/auth";
 import { z } from "zod";
 import { AuthenticatedRequest } from "_lib/Middlewares/AuthChecker";
+import { RefreshRequest } from "account/_lib/Middlewares/RefreshTokenChecker";
 
 const LOGIN_PAYLOAD = z.object({
     username: z.string(),
@@ -78,21 +79,14 @@ export class AuthController {
             .catch(err => next(err))
     }
 
-    async refresh(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    async refresh(req: RefreshRequest, res: Response, next: NextFunction) {
         const 
-            userId = req.player?.id ?? -1,
-            refreshToken = req.body["refresh_token"],
-            userAgent = req.headers["user-agent"] ?? ""
-
-        if(!refreshToken)
-            return next(
-                new AppError(
-                    AppErr.BadRequest,
-                    "Refresh token not found"
-                ))
+            userAgent = req.headers["user-agent"] ?? "",
+            playerId = req.refreshToken!.payload.playerId,
+            token = req.refreshToken!.token
 
         await this._authService
-            .refresh(userId, refreshToken, userAgent)
+            .refresh(playerId, token, userAgent)
             .then(({access, refresh}) => {
                 res.status(200) 
                     .send({

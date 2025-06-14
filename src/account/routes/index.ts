@@ -13,6 +13,7 @@ import { AuthChecker } from "_lib/Middlewares/AuthChecker";
 import { ValkeySession } from "account/repositories/valkey/valkeySession";
 import { Valkey } from "_lib/Persistence/Valkey";
 import { accountEnv } from "account/env";
+import { RefreshTokenChecker } from "account/_lib/Middlewares/RefreshTokenChecker";
 
 export class AccountRouterV1 {
     private readonly _router: Router
@@ -21,32 +22,35 @@ export class AccountRouterV1 {
     constructor( vk: Valkey) {
         this._upAt = Date.now()
 
-        const tokenParser = new BearerParser()
-        const authValidator = new AuthChecker(
-                                new Jwt( accountEnv.ACCESS_TOKEN_SECRET,
-                                        accountEnv.ACCESS_TOKEN_LIFETIME,
-                                        tokenParser))
+        const 
+            tokenParser = new BearerParser(),
+            accessTokenHandler = new Jwt( accountEnv.ACCESS_TOKEN_SECRET,
+                                    accountEnv.ACCESS_TOKEN_LIFETIME,
+                                    tokenParser),
+            refreshTokenHandler = new Jwt( accountEnv.REFRESH_TOKEN_SECRET,
+                                        accountEnv.REFRESH_TOKEN_LIFETIME,
+                                        tokenParser),
+            authValidator = new AuthChecker(accessTokenHandler),
+            refreshTokenChecker = new RefreshTokenChecker(refreshTokenHandler)
 
         const playerRepo = new PrismaPlayer()
         const sessionCache = new ValkeySession(vk.conn)
 
-        const authService = new AuthService(
+        const 
+            profileService = new ProfileService(playerRepo),
+            authService = new AuthService(
                                 playerRepo, 
                                 sessionCache,
                                 new Bcrypt(), 
-                                new Jwt( accountEnv.ACCESS_TOKEN_SECRET,
-                                        accountEnv.ACCESS_TOKEN_LIFETIME,
-                                        tokenParser),
-                                new Jwt( accountEnv.REFRESH_TOKEN_SECRET,
-                                        accountEnv.REFRESH_TOKEN_LIFETIME,
-                                        tokenParser))
-        const profileService = new ProfileService(playerRepo)
+                                accessTokenHandler, 
+                                refreshTokenHandler)
+        const 
+            authController = new AuthController(authService),
+            profileController = new ProfileController(profileService)
 
-        const authController = new AuthController(authService)
-        const profileController = new ProfileController(profileService)
-
-        const profileRouter = new ProfileRouter(profileController, authValidator)
-        const authRouter = new AuthRouter(authController, authValidator)
+        const 
+            profileRouter = new ProfileRouter(profileController, authValidator),
+            authRouter = new AuthRouter(authController, authValidator, refreshTokenChecker)
 
         this._router = express.Router()
         this._router.use("/auth", authRouter.router)
