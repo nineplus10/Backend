@@ -1,8 +1,5 @@
 services:
-  #############################################################################
-  ## APPLICATIONS
-  #############################################################################
-  account:
+  server:
     build: .
     ports: 
       - 7788:${ACC_APP_PORT}
@@ -23,17 +20,23 @@ services:
       ACC_CACHE_URL: ${ACC_CACHE_URL:-redis://:dont_you_have_something_better_to_do@account-cache:6379/0}
 
       MM_APP_PORT: ${MM_APP_PORT:-7789}
+      MM_CACHE_URL: ${MM_CACHE_URL:-redis://:dont_you_have_something_better_to_do_too@game-cache:6379/0}
     depends_on:
       account-db:
         condition: service_healthy
         restart: true
       account-cache:
         condition: service_healthy
+      game-cache:
+        condition: service_healthy
 
+  #############################################################################
+  ## ACCOUNT
+  #############################################################################
   account-db:
     image: postgres:17-alpine
     volumes: 
-      - main-db-vol:/var/lib/postgresql/data
+      - account-main-vol:/var/lib/postgresql/data
     environment:
       POSTGRES_PASSWORD: ${DB_PASS:-dont_you_have_something_better_to_do}
     healthcheck:
@@ -47,7 +50,7 @@ services:
     image: valkey/valkey:8-alpine
     command: "valkey-server --save 60 1 --loglevel warning" # Fine-tune later
     volumes:
-      - cache-db-vol:/data
+      - account-cache-vol:/data
     healthcheck:
       test: ["CMD-SHELL", "valkey-cli ping"]
       interval: 10s
@@ -56,9 +59,23 @@ services:
       timeout: 10s
 
   #############################################################################
-  ## Miscellanea
+  ## Game
   #############################################################################
+  game-cache:
+    image: valkey/valkey:8-alpine
+    command: "valkey-server --save 60 1 --loglevel warning" # Fine-tune later
+    volumes:
+      - game-cache-vol:/data
+    healthcheck:
+      test: ["CMD-SHELL", "valkey-cli ping"]
+      interval: 10s
+      retries: 5
+      start_period: 3s
+      timeout: 10s
 
+  #############################################################################
+  ## Message Broker
+  #############################################################################
   broker:
     image: apache/kafka:3.8.1
     ports:
@@ -77,5 +94,6 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_NUM_PARTITIONS: 3
 volumes:
-  main-db-vol:
-  cache-db-vol:
+  account-main-vol:
+  account-cache-vol:
+  game-cache-vol:
