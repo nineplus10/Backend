@@ -1,7 +1,17 @@
 import { Entity } from "_lib/Domain/Entity";
+import { DomainErr, DomainError } from "_lib/Error/DomainError";
+import { ZodValidator } from "_lib/Validator/zod";
+import { z } from "zod";
 
 interface PlayerProps {
+    gamePlayed: number,
+    wins: number
 }
+
+const VALID_PROPS = z.object({
+    wins: z.number().nonnegative(),
+    gamePlayed: z.number().nonnegative()
+})
 
 export class Player extends Entity<PlayerProps> {
     private constructor(props: PlayerProps, id?: number) {
@@ -9,8 +19,20 @@ export class Player extends Entity<PlayerProps> {
     }
 
     static create(props: PlayerProps, id?: number) {
-        // TODO: Add domain validation
+        const validator = new ZodValidator<
+            z.infer<typeof VALID_PROPS>
+                >(VALID_PROPS)
+        const {data, error} = validator.validate(props)
+        if(error)
+            throw new DomainError(
+                DomainErr.InvalidValue,
+                validator.getErrMessage(error))
 
-        return new Player(props, id)
+        if(props.wins > props.gamePlayed)
+            throw new DomainError(
+                DomainErr.InvalidValue,
+                "`wins` could not be larger than `gamePlayed`")
+
+        return new Player(data, id)
     }
 }

@@ -66,7 +66,11 @@ export class WsApp {
                 }
 
                 const res = new WsResponse(ws.send.bind(ws))
-                this._router.serve(message, res)
+                this._router.serve(message, res, (err: Error) => {
+                    res.status("ERR")
+                        .reason(err.message)
+                        .send()
+                })
             })
         })
 

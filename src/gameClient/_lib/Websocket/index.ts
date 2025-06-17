@@ -56,3 +56,5 @@ export interface WebsocketMessage {
         [k: string]: any 
     }
 }
+
+export type WebsocketOnError = (err: Error) => void
