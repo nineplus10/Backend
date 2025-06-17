@@ -1,8 +1,6 @@
 import { Entity } from "_lib/Domain/Entity";
-import { Handle } from "../values/handle";
 
 interface PlayerProps {
-    username: Handle
 }
 
 export class Player extends Entity<PlayerProps> {

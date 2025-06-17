@@ -1,14 +1,17 @@
+import { Valkey } from "_lib/Persistence/Valkey"
 import { KafkaConn } from "./_lib/MessageBroker/kafka"
 import { WsApp } from "./_lib/Websocket/ws"
-import { GameClientRouterV1 } from "./routes"
+import { GameClientRouterV1 } from "./routes/app"
+import { gameEnv } from "./env"
 
 export class GameClientModule {
     _app: WsApp
 
     constructor() {
-        const router = new GameClientRouterV1()
-        const broker = KafkaConn
+        const brokerConn = KafkaConn
+        const vkConn = new Valkey(gameEnv.CACHE_URL)
 
+        const router = new GameClientRouterV1(vkConn, brokerConn)
         this._app = new WsApp(router)
     }
 

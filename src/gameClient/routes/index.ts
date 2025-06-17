@@ -1,18 +1,33 @@
-import { ErrorPayload } from "gameClient/_lib/Websocket/payload/error";
-import { OkPayload } from "gameClient/_lib/Websocket/payload/ok";
-import { WsRouter } from "gameClient/_lib/Websocket/websocket";
+import { WsMessage } from "gameClient/_lib/Websocket/ws";
+import { WsResponse } from "gameClient/controller/response";
 
-export class GameClientRouterV1 implements WsRouter {
-    constructor() { }
+export type WsServeFx = (payload: WsMessage, res: WsResponse) => void
 
-    serve(data: any): OkPayload | ErrorPayload {
-        let payload;
-        try {
-            payload = <object>JSON.parse(data.toString())
-        } catch(SyntaxError) {
-            return ErrorPayload.create({})
+export interface WsRouter {
+    serve: WsServeFx
+}
+
+/**
+ * Matches payload destination to routers using longest matching substring 
+ * strategy. Wildcards aren't supported.
+ * 
+ * @returns [router, matchingRouteLength]
+ */ 
+export function findRouting(
+    destination: string,
+    routes: [string, WsServeFx][]
+): [WsServeFx | undefined, number] {
+    const match: [WsServeFx | undefined, number] = [undefined, -1]
+    routes.forEach(r => {
+        const [route, serveFx] = r
+        const isBetterCandidate = destination.startsWith(route)
+                                && route.length > match[1]
+        if(isBetterCandidate) {
+            match[0] = serveFx
+            match[1] = route.length
         }
+    })
 
-        return payload
-    }
+    match[1]++ // Plus delimiter
+    return match
 }

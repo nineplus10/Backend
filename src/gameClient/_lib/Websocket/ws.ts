@@ -1,17 +1,25 @@
 import { randomUUID } from "crypto";
 import { createServer, Server } from "http";
 import { WebSocket, WebSocketServer } from "ws";
-import { WsRouter } from "./websocket";
-
-type ConnectionEntry = {
-    status: boolean
-    messageCount: number
-    connection: WebSocket
-}
+import { WsRouter } from "gameClient/routes";
+import { WsResponse } from "gameClient/controller/response";
 
 const connections: {
-    [k: ReturnType<typeof randomUUID>]: ConnectionEntry
+    [k: ReturnType<typeof randomUUID>]: {
+        status: boolean
+        messageCount: number
+        connection: WebSocket
+    }
 } = { }
+
+export interface WsMessage {
+    meta: {
+        destination: string
+    }
+    data: { 
+        [k: string]: any 
+    }
+}
 
 export class WsApp {
     private readonly _srv: Server
@@ -27,6 +35,15 @@ export class WsApp {
         return uuid
     }
 
+    private validateMessage(msg: any): WsMessage | undefined {
+        // I wonder whether there's a better way to do this
+        const isValid = 
+            msg.hasOwnProperty("meta")
+            && msg.meta.hasOwnProperty("destination")
+
+        return isValid? <WsMessage>msg: undefined
+    }
+
     constructor( private readonly _router: WsRouter) {
         const wsSrv = new WebSocketServer({noServer: true })
         wsSrv.on("connection", ws => {
@@ -38,8 +55,21 @@ export class WsApp {
             const id = this.saveNewConnection(ws)
             ws.on("message", data => {
                 connections[id].messageCount++
-                const response = this._router.serve(data)
-                ws.send(JSON.stringify(response))
+                let payload;
+                try {
+                    payload = JSON.parse(data.toString())
+                } catch(SyntaxError) {
+                    ws.send("Only valid JSON payload is supported")
+                }
+
+                const message = this.validateMessage(payload)
+                if(!message) {
+                    ws.send("Invalid message structure")
+                    return
+                }
+
+                const res = new WsResponse(ws.send.bind(ws))
+                this._router.serve(message, res)
             })
         })
 
