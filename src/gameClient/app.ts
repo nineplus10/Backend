@@ -1,8 +1,8 @@
 import { Valkey } from "_lib/Persistence/Valkey"
 import { KafkaConn } from "./_lib/MessageBroker/kafka"
-import { WsApp } from "./_lib/Websocket/ws"
 import { GameClientRouterV1 } from "./routes/app"
 import { gameEnv } from "./env"
+import { WsApp } from "./_lib/Websocket/ws"
 
 export class GameClientModule {
     _app: WsApp

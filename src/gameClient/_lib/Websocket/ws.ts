@@ -2,46 +2,40 @@ import { randomUUID } from "crypto";
 import { createServer, Server } from "http";
 import { WebSocket, WebSocketServer } from "ws";
 import { WsRouter } from "gameClient/routes";
-import { WsResponse } from "gameClient/controller/response";
+import { WebsocketMessage, WebsocketResponse } from ".";
 
-const connections: {
-    [k: ReturnType<typeof randomUUID>]: {
-        status: boolean
-        messageCount: number
-        connection: WebSocket
-    }
-} = { }
+export class WsResponse implements WebsocketResponse {
+    meta: WebsocketResponse["meta"];
 
-export interface WsMessage {
-    meta: {
-        destination: string
+    constructor(
+        private readonly _sendFx: (payload: any) => void
+    ) {
+        this.meta = {
+            status: "OK"
+        }
     }
-    data: { 
-        [k: string]: any 
+
+    send(payload?: any) {
+        this._sendFx(JSON.stringify({
+            meta: this.meta,
+            data: payload}
+        ))
+    }
+
+    status(s: WebsocketResponse["meta"]["status"]): WsResponse {
+        this.meta.status = s; return this
+    }
+    reason(r: WebsocketResponse["meta"]["reason"]): WsResponse {
+        this.meta.reason = r; return this
     }
 }
 
 export class WsApp {
     private readonly _srv: Server
-
-    private saveNewConnection(conn: WebSocket): ReturnType<typeof randomUUID> {
-        const uuid = randomUUID()
-        connections[uuid] = {
-            status: true,
-            messageCount: 0,
-            connection: conn
+    private readonly _connections: {
+        [k: ReturnType<typeof randomUUID>]: {
+            connection: WebSocket
         }
-
-        return uuid
-    }
-
-    private validateMessage(msg: any): WsMessage | undefined {
-        // I wonder whether there's a better way to do this
-        const isValid = 
-            msg.hasOwnProperty("meta")
-            && msg.meta.hasOwnProperty("destination")
-
-        return isValid? <WsMessage>msg: undefined
     }
 
     constructor( private readonly _router: WsRouter) {
@@ -49,12 +43,15 @@ export class WsApp {
         wsSrv.on("connection", ws => {
             ws.on("error", console.error)
             ws.on("close", _ => {
-                delete connections[id]
+                delete this._connections[id]
             })
 
-            const id = this.saveNewConnection(ws)
+            const id = randomUUID()
+            this._connections[id] = {
+                connection: ws
+            }
+
             ws.on("message", data => {
-                connections[id].messageCount++
                 let payload;
                 try {
                     payload = JSON.parse(data.toString())
@@ -81,7 +78,16 @@ export class WsApp {
             })
         })
 
+        this._connections = {}
         this._srv = srv
+    }
+
+    private validateMessage(msg: any): WebsocketMessage | undefined {
+        const isValid = // I wonder whether there's a better way to do this
+            msg.hasOwnProperty("meta")
+            && msg.meta.hasOwnProperty("destination")
+
+        return isValid? <WebsocketMessage>msg: undefined
     }
 
     get server(): WsApp["_srv"] {return this._srv}

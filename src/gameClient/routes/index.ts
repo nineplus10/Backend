@@ -1,7 +1,6 @@
-import { WsMessage } from "gameClient/_lib/Websocket/ws";
-import { WsResponse } from "gameClient/controller/response";
+import { WebsocketMessage, WebsocketResponse } from "gameClient/_lib/Websocket";
 
-export type WsServeFx = (payload: WsMessage, res: WsResponse) => void
+export type WsServeFx = (payload: WebsocketMessage, res: WebsocketResponse) => void
 
 export interface WsRouter {
     serve: WsServeFx

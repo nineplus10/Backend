@@ -1,5 +1,4 @@
-import { WsMessage } from "gameClient/_lib/Websocket/ws"
-import { WsResponse } from "./response"
+import { WebsocketMessage, WebsocketResponse } from "gameClient/_lib/Websocket"
 import { MatchService } from "gameClient/services/match"
 
 export class MatchController {
@@ -7,7 +6,7 @@ export class MatchController {
         private readonly _matchService: MatchService
     ) {}
 
-    async joinPool(payload: WsMessage, res: WsResponse) {
+    async joinPool(payload: WebsocketMessage, res: WebsocketResponse) {
         const playerId = payload.data.playerId
         if(!playerId) {
             res.status("ERR")
@@ -22,7 +21,7 @@ export class MatchController {
             .catch(err => res.status("ERR").reason(err))
     }
 
-    async leavePool(payload: WsMessage, res: WsResponse) {
+    async leavePool(payload: WebsocketMessage, res: WebsocketResponse) {
         const playerId = payload.data.playerId
         if(!playerId) {
             res.status("ERR")
