@@ -3,6 +3,9 @@ import { createServer, Server } from "http";
 import { WebSocket, WebSocketServer } from "ws";
 import { WsRouter } from "gameClient/routes";
 import { WebsocketMessage, WebsocketResponse } from ".";
+import { z } from "zod";
+import { ZodValidator } from "_lib/Validator/zod";
+import { AppErr, AppError } from "_lib/Error/AppError";
 
 export class WsResponse implements WebsocketResponse {
     meta: WebsocketResponse["meta"];
@@ -30,6 +33,32 @@ export class WsResponse implements WebsocketResponse {
     }
 }
 
+export class WsMessage implements WebsocketMessage {
+    static VALID_MESSAGE = z.object({
+        meta: z.object({
+            destination: z.string()
+        }),
+        data: z.record(z.string(), z.any())
+    })
+
+    meta: { destination: string; };
+    data: { [k: string]: any; };
+
+    constructor(messageLike: object) {
+        const validator = new ZodValidator<
+            z.infer<typeof WsMessage.VALID_MESSAGE>
+                >( WsMessage.VALID_MESSAGE)
+        const {data, error} = validator.validate(messageLike)
+        if(error)
+            throw new AppError(
+                AppErr.BadRequest,
+                "Invalid message structure")
+
+        this.meta = data.meta
+        this.data = data.data
+    }
+}
+
 export class WsApp {
     private readonly _srv: Server
     private readonly _connections: {
@@ -41,32 +70,34 @@ export class WsApp {
     constructor( private readonly _router: WsRouter) {
         const wsSrv = new WebSocketServer({noServer: true })
         wsSrv.on("connection", ws => {
-            ws.on("error", console.error)
-            ws.on("close", _ => {
-                delete this._connections[id]
-            })
-
             const id = randomUUID()
             this._connections[id] = {
                 connection: ws
             }
 
+            ws.on("error", console.error)
+            ws.on("close", _ => {
+                delete this._connections[id]
+            })
             ws.on("message", data => {
+                const res = new WsResponse(ws.send.bind(ws))
                 let payload;
+                let msg;
                 try {
                     payload = JSON.parse(data.toString())
-                } catch(SyntaxError) {
-                    ws.send("Only valid JSON payload is supported")
-                }
-
-                const message = this.validateMessage(payload)
-                if(!message) {
-                    ws.send("Invalid message structure")
+                    msg = new WsMessage(payload)
+                } catch(err) {
+                    if(err instanceof SyntaxError) {
+                        res.status("ERR")
+                            .send("Only valid JSON payload is supported")
+                    } else if(err instanceof AppError) {
+                        res.status("ERR")
+                            .send("Invalid message structure")
+                    }
                     return
                 }
 
-                const res = new WsResponse(ws.send.bind(ws))
-                this._router.serve(message, res, (err: Error) => {
+                this._router.serve(msg, res, (err: Error) => {
                     res.status("ERR")
                         .reason(err.message)
                         .send()
@@ -84,14 +115,6 @@ export class WsApp {
 
         this._connections = {}
         this._srv = srv
-    }
-
-    private validateMessage(msg: any): WebsocketMessage | undefined {
-        const isValid = // I wonder whether there's a better way to do this
-            msg.hasOwnProperty("meta")
-            && msg.meta.hasOwnProperty("destination")
-
-        return isValid? <WebsocketMessage>msg: undefined
     }
 
     get server(): WsApp["_srv"] {return this._srv}
