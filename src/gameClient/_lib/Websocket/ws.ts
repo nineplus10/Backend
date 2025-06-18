@@ -2,13 +2,13 @@ import { randomUUID } from "crypto";
 import { createServer, Server } from "http";
 import { WebSocket, WebSocketServer } from "ws";
 import { WsRouter } from "gameClient/routes";
-import { WebsocketMessage, WebsocketResponse } from ".";
+import { Message, Response } from ".";
 import { z } from "zod";
 import { ZodValidator } from "_lib/Validator/zod";
 import { AppErr, AppError } from "_lib/Error/AppError";
 
-export class WsResponse implements WebsocketResponse {
-    meta: WebsocketResponse["meta"];
+export class WsResponse implements Response {
+    meta: Response["meta"];
 
     constructor(
         private readonly _sendFx: (payload: any) => void
@@ -25,15 +25,15 @@ export class WsResponse implements WebsocketResponse {
         ))
     }
 
-    status(s: WebsocketResponse["meta"]["status"]): WsResponse {
+    status(s: Response["meta"]["status"]): WsResponse {
         this.meta.status = s; return this
     }
-    reason(r: WebsocketResponse["meta"]["reason"]): WsResponse {
+    reason(r: Response["meta"]["reason"]): WsResponse {
         this.meta.reason = r; return this
     }
 }
 
-export class WsMessage implements WebsocketMessage {
+export class WsMessage implements Message {
     static VALID_MESSAGE = z.object({
         meta: z.object({
             destination: z.string()

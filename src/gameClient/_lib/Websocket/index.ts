@@ -1,4 +1,4 @@
-export interface WebsocketResponse {
+export interface Response {
     /**
      * Metadata of the response
      */
@@ -30,7 +30,7 @@ export interface WebsocketResponse {
      * @param s 
      * @returns the instance itself
      */
-    status: (s: WebsocketResponse["meta"]["status"]) => WebsocketResponse;
+    status: (s: Response["meta"]["status"]) => Response;
 
     /**
      * Sets the `reason` of `this.meta`.
@@ -38,10 +38,10 @@ export interface WebsocketResponse {
      * @param r 
      * @returns the instance itself
      */
-    reason: (r: WebsocketResponse["meta"]["reason"]) => WebsocketResponse;
+    reason: (r: Response["meta"]["reason"]) => Response;
 }
 
-export interface WebsocketMessage {
+export interface Message {
     /**
      * Metadata of the message
      */
@@ -57,4 +57,4 @@ export interface WebsocketMessage {
     }
 }
 
-export type WebsocketOnError = (err: Error) => void
+export type OnErrorFx = (err: Error) => void

@@ -1,5 +1,5 @@
 import { ZodValidator } from "_lib/Validator/zod"
-import { WebsocketMessage, WebsocketOnError, WebsocketResponse } from "gameClient/_lib/Websocket"
+import { Message, OnErrorFx, Response } from "gameClient/_lib/Websocket"
 import { MatchService } from "gameClient/services/match"
 import { z } from "zod"
 
@@ -17,15 +17,11 @@ export class MatchController {
         private readonly _matchService: MatchService
     ) {}
 
-    async joinPool(
-        payload: WebsocketMessage, 
-        _: WebsocketResponse,
-        onError: WebsocketOnError
-    ) {
+    async joinPool(msg: Message, _: Response, onError: OnErrorFx) {
         const props = {
-            playerId: payload.data.playerId,
-            wins: payload.data.wins,
-            gamePlayed: payload.data.gamePlayed
+            playerId: msg.data.playerId,
+            wins: msg.data.wins,
+            gamePlayed: msg.data.gamePlayed
         }
         const validator = new ZodValidator<
             z.infer<typeof VALID_JOIN_POOL>
@@ -42,13 +38,9 @@ export class MatchController {
             .catch(err => onError(err))
     }
 
-    async leavePool(
-        payload: WebsocketMessage, 
-        _: WebsocketResponse,
-        onError: WebsocketOnError
-    ) {
+    async leavePool(msg: Message, _: Response, onError: OnErrorFx) {
         const props = {
-            playerId: payload.data.playerId,
+            playerId: msg.data.playerId,
         }
         const validator = new ZodValidator<
             z.infer<typeof VALID_LEAVE_POOL>

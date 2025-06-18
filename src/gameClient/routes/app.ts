@@ -1,7 +1,7 @@
 import { MatchController } from "gameClient/controller/match"
 import { findRouting, WsRouter, WsServeFx } from "."
 import { MatchRouter } from "./match"
-import { WebsocketMessage, WebsocketResponse, WebsocketOnError } from "gameClient/_lib/Websocket"
+import { Message, Response, OnErrorFx } from "gameClient/_lib/Websocket"
 import { Valkey } from "_lib/Persistence/Valkey"
 import { MatchService } from "gameClient/services/match"
 import { ValkeyMatch } from "gameClient/repository/valkey/valkeyMatch"
@@ -22,12 +22,8 @@ export class GameClientRouterV1 implements WsRouter {
         ]
     }
 
-    serve(
-        payload: WebsocketMessage, 
-        res: WebsocketResponse,
-        onError: WebsocketOnError
-    ): void {
-        const destination = payload.meta.destination
+    serve(msg: Message, res: Response, onError: OnErrorFx): void {
+        const destination = msg.meta.destination
         const [matchServeFx, matchLength] = findRouting(destination, this.serveFx)
         if(!matchServeFx) {
             res.status("ERR")
@@ -35,9 +31,9 @@ export class GameClientRouterV1 implements WsRouter {
                 .send()
             return
         }
-        payload.meta.destination = 
-            (<string>payload.meta.destination)
+        msg.meta.destination = 
+            (<string>msg.meta.destination)
             .slice(matchLength)
-        matchServeFx( payload, res, onError)
+        matchServeFx( msg, res, onError)
     }
 }
