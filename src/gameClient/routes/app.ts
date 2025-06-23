@@ -14,7 +14,7 @@ export class GameClientRouterV1 implements WsRouter {
 
     static async create(
         cacheConn: Valkey["_conn"], 
-        _msgBroker: MessageBrokerHandler
+        msgBroker: MessageBrokerHandler
     ): Promise<GameClientRouterV1> {
         const matchCache = new ValkeyMatch(cacheConn)
     

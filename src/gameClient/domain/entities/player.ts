@@ -35,4 +35,7 @@ export class Player extends Entity<PlayerProps> {
 
         return new Player(data, id)
     }
+
+    get gamePlayed(): PlayerProps["gamePlayed"] {return this._props.gamePlayed}
+    get wins(): PlayerProps["wins"] {return this._props.wins}
 }

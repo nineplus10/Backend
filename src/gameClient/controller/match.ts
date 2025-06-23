@@ -34,7 +34,6 @@ export class MatchController {
 
         await this._matchService
             .joinPool(data.playerId, data.gamePlayed, data.wins)
-            .then(_ => {})
             .catch(err => onError(err))
     }
 
@@ -53,7 +52,6 @@ export class MatchController {
 
         await this._matchService
             .leavePool(data.playerId)
-            .then(_ => {})
             .catch(err => onError(err))
     }
 }

@@ -11,23 +11,11 @@ export class MatchService {
             gamePlayed: gamePlayed, 
             wins: wins
         }, playerId)
-        await this._matchCache.addPlayer(player)
+        await this._matchCache.enqueue(player)
     }
 
     async leavePool(playerId: number): Promise<void> {
-        const player = Player.create({
-            gamePlayed: 0, 
-            wins: 0
-        }, playerId)
-        await this._matchCache.removePlayer(player)
+        await this._matchCache.dequeue(playerId)
     }
 
-    async matchmake() {
-        const N_PLAYERS_PER_BATCH = 20
-        await this._matchCache
-            .getMany(N_PLAYERS_PER_BATCH)
-            .then(matches => {
-                console.log(matches)
-            })
-    }
 }
