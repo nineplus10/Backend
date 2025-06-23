@@ -39,15 +39,20 @@ export class KafkaHandler<ConsumerCase extends string> implements MessageBrokerH
             }
 
             await consumer.connect()
-            await consumer.subscribe({topic: topic, fromBeginning: false})
-            await consumer.run({
-                eachMessage: async({message}) => {
-                    const value = message.value?.toString()
-                    if(value) {
-                        consumerEntry.subscribers.forEach(cFx => cFx(value))
-                    }
-                }
-            })
+                .then(_ => consumer.subscribe({topic: topic, fromBeginning: false}))
+                .then(_ => {
+                    return consumer.run({
+                        eachMessage: async({message}) => {
+                            const value = message.value?.toString()
+                            if(value) {
+                                consumerEntry.subscribers.forEach(cFx => cFx(value))
+                            }
+                        }
+                    })
+                })
+                .catch(err => {
+                    console.log(`Error during connecting consumer: ${err}`)
+                })
 
             this._consumers[topic].push(consumerEntry)
             idx = this._consumers[topic].length - 1
@@ -59,10 +64,11 @@ export class KafkaHandler<ConsumerCase extends string> implements MessageBrokerH
     async produceTo(topic: string, payload: any[]): Promise<void> {
         const producer = this._conn.producer()
         await producer.connect()
-        await producer.send({
-            topic: topic,
-            messages: payload.map(v => ({value: v}))
-        })
-        console.log("Sent")
+            .then(_ => {
+                return producer.send({
+                    topic: topic,
+                    messages: payload.map(v => ({value: v}))
+                })
+            })
     }
 }
