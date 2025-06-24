@@ -16,7 +16,7 @@ services:
       ACC_REFRESH_TOKEN_LIFETIME: ${ACC_REFRESH_TOKEN_LIFETIME:-10}
       ACC_AUTH_MAX_FAIL: ${ACC_AUTH_MAX_FAIL:-3}
       ACC_AUTH_FAIL_COOLDOWN: ${ACC_AUTH_FAIL_COOLDOWN:-10}
-      ACC_DB_URL: ${ACC_DB_URL:-postgresql://postgres:dont_you_have_something_better_to_do@account-main:5432/mydb?schema=public}
+      ACC_DB_URL: ${ACC_DB_URL:-postgresql://postgres:dont_you_have_something_better_to_do@account-db:5432/mydb?schema=public}
       ACC_CACHE_URL: ${ACC_CACHE_URL:-redis://:dont_you_have_something_better_to_do@account-cache:6379/0}
 
       MM_APP_PORT: ${MM_APP_PORT:-7789}
@@ -38,7 +38,7 @@ services:
     volumes: 
       - account-main-vol:/var/lib/postgresql/data
     environment:
-      POSTGRES_PASSWORD: ${DB_PASS:-dont_you_have_something_better_to_do}
+      POSTGRES_PASSWORD: ${ACC_DB_PASS:-dont_you_have_something_better_to_do}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
       interval: 10s
