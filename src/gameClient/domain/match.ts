@@ -32,4 +32,7 @@ export class Match extends Entity<MatchProps> {
 
         return new Match(props, id)
     }
+
+    get player1(): MatchProps["player1"] {return this._props.player1}
+    get player2(): MatchProps["player2"] {return this._props.player2}
 }

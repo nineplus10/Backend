@@ -6,6 +6,7 @@ import { Valkey } from "_lib/Persistence/Valkey"
 import { MatchService } from "gameClient/services/match"
 import { ValkeyMatch } from "gameClient/repository/valkey/valkeyMatch"
 import { MessageBrokerHandler } from "gameClient/_lib/MessageBroker"
+import { HighestWinsMatchmaker } from "gameClient/domain/services/matchmaker/highestWins"
 
 export class GameClientRouterV1 implements WsRouter {
     private constructor(
@@ -18,7 +19,8 @@ export class GameClientRouterV1 implements WsRouter {
     ): Promise<GameClientRouterV1> {
         const matchCache = new ValkeyMatch(cacheConn)
     
-        const matchService = new MatchService(matchCache)
+        const matchService = 
+            new MatchService( matchCache, new HighestWinsMatchmaker())
 
         const matchController = new MatchController(matchService)
 
@@ -27,6 +29,12 @@ export class GameClientRouterV1 implements WsRouter {
             ["match", matchRouter.serve.bind(matchRouter)],
         ]
 
+        // setInterval(async() => {
+        //     await matchService.matchmake()
+        //         .catch(err => {
+        //             console.error(err.message)
+        //         })
+        // }, 3*1000)
         return new GameClientRouterV1(serveFx)
     }
 
