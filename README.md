@@ -41,3 +41,6 @@ docker compose up
 Check this [documentation](https://82kin4x1s8.apidog.io) for the reference on consuming the API. It isn't usable on the documentation platform since the server hasn't been hosted anywhere, but hey, at least it could provide clues on what to expect.
 
 > Documentation on design choices and reasoning coming soon!
+
+Devblogs are available!
+- [0x01 — The Initiation](https://medium.com/@allenrasheed/9p10-establishing-the-foundation-daed994e6a9c)
