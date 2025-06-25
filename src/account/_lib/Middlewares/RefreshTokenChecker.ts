@@ -1,5 +1,5 @@
-import { AppErr, AppError } from "_lib/Error/AppError"
-import { TokenHandler } from "_lib/TokenHandler/TokenHandler"
+import { AppErr, AppError } from "_lib/Error/http/AppError"
+import { TokenHandler } from "_lib/TokenHandler"
 import { NextFunction, Request, Response } from "express"
 
 interface TokenPayload {

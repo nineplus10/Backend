@@ -1,7 +1,6 @@
 import { Player } from "gameClient/domain/entities/player";
 import { Matchmaker } from ".";
 import { Match } from "gameClient/domain/match";
-import { DomainErr, DomainError } from "_lib/Error/DomainError";
 
 export class HighestGamePlayedMatchmaker implements Matchmaker {
     private sort(players: Player[]): Player[] {
@@ -38,9 +37,7 @@ export class HighestGamePlayedMatchmaker implements Matchmaker {
 
     do(players: Player[]): Match[] {
         if(players.length % 2 !== 0) {
-            throw new DomainError(
-                DomainErr.InvalidValue,
-                "Couldn't matchmake with odd number of player batch")
+            throw new Error( "Couldn't matchmake with odd number of player batch")
         }
 
         const candidates = this.sort(players)

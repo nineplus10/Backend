@@ -5,7 +5,7 @@ import { WsRouter } from "gameClient/routes";
 import { Message, Response } from ".";
 import { z } from "zod";
 import { ZodValidator } from "_lib/Validator/zod";
-import { AppErr, AppError } from "_lib/Error/AppError";
+import { AppErr, AppError } from "_lib/Error/http/AppError";
 
 export class WsResponse implements Response {
     meta: Response["meta"];
@@ -61,6 +61,7 @@ export class WsMessage implements Message {
 
 export class WsApp {
     private readonly _srv: Server
+    private readonly _wsSrv: WebSocketServer
     private readonly _connections: {
         [k: ReturnType<typeof randomUUID>]: {
             connection: WebSocket
@@ -68,8 +69,8 @@ export class WsApp {
     }
 
     constructor( private readonly _router: WsRouter) {
-        const wsSrv = new WebSocketServer({noServer: true })
-        wsSrv.on("connection", ws => {
+        this._wsSrv = new WebSocketServer({noServer: true })
+        this._wsSrv.on("connection", ws => {
             const id = randomUUID()
             this._connections[id] = {
                 connection: ws
@@ -106,16 +107,16 @@ export class WsApp {
         })
 
         // Adopted from: https://github.com/websockets/ws?tab=readme-ov-file#multiple-servers-sharing-a-single-https-server
-        const srv = createServer()
-        srv.on("upgrade", (req, socket, head) => {
-            wsSrv.handleUpgrade(req, socket, head, function done(ws) {
-                wsSrv.emit("connection", ws, req)
+        this._srv = createServer()
+        this._srv.on("upgrade", (req, socket, head) => {
+            this._wsSrv.handleUpgrade(req, socket, head, ws => {
+                this._wsSrv.emit("connection", ws, req)
             })
         })
 
         this._connections = {}
-        this._srv = srv
     }
 
+    get websocket(): WsApp["_wsSrv"] {return this._wsSrv}
     get server(): WsApp["_srv"] {return this._srv}
 }

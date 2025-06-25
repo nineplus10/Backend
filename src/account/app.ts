@@ -2,8 +2,8 @@ import e from "express"
 import express, {Response } from "express";
 import cors from "cors"
 import { Valkey } from "_lib/Persistence/Valkey";
-import { Logger } from "_lib/Middlewares/Logger";
-import { ErrorHandler } from "_lib/Middlewares/ErrorHandler";
+import { Logger } from "account/_lib/Middlewares/Logger";
+import { ErrorHandler } from "account/_lib/Middlewares/ErrorHandler";
 import { AccountRouterV1 } from "./routes";
 import { accountEnv } from "./env";
 

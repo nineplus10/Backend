@@ -1,4 +1,4 @@
-import { DomainErr, DomainError } from "_lib/Error/DomainError";
+import { DomainErr, DomainError } from "_lib/Error/http/DomainError";
 import { Entity } from "../../_lib/Domain/Entity";
 import { Stats } from "./entities/stats";
 import { Bio } from "./values/bio";

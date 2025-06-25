@@ -1,6 +1,6 @@
 import { findRouting, WsRouter, WsServeFx } from ".";
 import { MatchController } from "gameClient/controller/match";
-import { Message, OnErrorFx, Response } from "gameClient/_lib/Websocket";
+import { Message, OnErrorFx, Response } from "_lib/Websocket";
 
 export class MatchRouter implements WsRouter  {
     private readonly _serveFx: [string, WsServeFx][]

@@ -1,4 +1,4 @@
-import { AuthChecker } from "_lib/Middlewares/AuthChecker";
+import { AuthChecker } from "account/_lib/Middlewares/AuthChecker";
 import { RefreshTokenChecker } from "account/_lib/Middlewares/RefreshTokenChecker";
 import { AuthController } from "account/controllers/authController";
 import express, { Router } from "express";

@@ -1,11 +1,11 @@
 import { MatchController } from "gameClient/controller/match"
 import { findRouting, WsRouter, WsServeFx } from "."
 import { MatchRouter } from "./match"
-import { Message, Response, OnErrorFx } from "gameClient/_lib/Websocket"
+import { Message, Response, OnErrorFx } from "_lib/Websocket"
 import { Valkey } from "_lib/Persistence/Valkey"
 import { MatchService } from "gameClient/services/match"
 import { ValkeyMatch } from "gameClient/repository/valkey/valkeyMatch"
-import { MessageBrokerHandler } from "gameClient/_lib/MessageBroker"
+import { MessageBrokerHandler } from "_lib/MessageBroker"
 import { HighestWinsMatchmaker } from "gameClient/domain/services/matchmaker/highestWins"
 
 export class GameClientRouterV1 implements WsRouter {

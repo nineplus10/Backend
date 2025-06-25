@@ -1,9 +1,9 @@
-import { Consumer, Kafka } from "kafkajs";
+import { Consumer, Kafka as K} from "kafkajs";
 import { ConsumeFx, ConsumerEntry, MessageBrokerHandler } from ".";
 
-export class KafkaHandler<ConsumerCase extends string> implements MessageBrokerHandler 
+export class Kafka<ConsumerCase extends string> implements MessageBrokerHandler 
 {
-    private readonly _conn: Kafka
+    private readonly _conn: K
     private readonly _consumers: {
         [topic: string ]: ConsumerEntry<Consumer>[]
     } 
@@ -12,7 +12,7 @@ export class KafkaHandler<ConsumerCase extends string> implements MessageBrokerH
         private readonly clientId: string, 
         brokers: string[],
     ) {
-        this._conn = new Kafka({ clientId: this.clientId, brokers: brokers })
+        this._conn = new K({ clientId: this.clientId, brokers: brokers })
         this._consumers = {}
     }
 

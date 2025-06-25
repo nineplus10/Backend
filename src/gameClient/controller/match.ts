@@ -1,5 +1,5 @@
 import { ZodValidator } from "_lib/Validator/zod"
-import { Message, OnErrorFx, Response } from "gameClient/_lib/Websocket"
+import { Message, OnErrorFx, Response } from "_lib/Websocket"
 import { MatchService } from "gameClient/services/match"
 import { z } from "zod"
 

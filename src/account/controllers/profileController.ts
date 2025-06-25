@@ -1,5 +1,5 @@
-import { AppErr, AppError } from "_lib/Error/AppError";
-import { AuthenticatedRequest } from "_lib/Middlewares/AuthChecker";
+import { AppErr, AppError } from "_lib/Error/http/AppError";
+import { AuthenticatedRequest } from "account/_lib/Middlewares/AuthChecker";
 import { ZodValidator } from "_lib/Validator/zod";
 import { ProfileService } from "account/services/profile";
 import { NextFunction, Response } from "express";

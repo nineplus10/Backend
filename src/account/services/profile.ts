@@ -1,4 +1,4 @@
-import { AppErr, AppError } from "_lib/Error/AppError";
+import { AppErr, AppError } from "_lib/Error/http/AppError";
 import { Player } from "account/domain/player";
 import { Bio } from "account/domain/values/bio";
 import { PlayerRepo } from "account/repositories/player";

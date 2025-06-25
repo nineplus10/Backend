@@ -1,7 +1,6 @@
 import { MatchCache } from "../match";
 import valkey from "iovalkey";
 import { Player } from "gameClient/domain/entities/player";
-import { AppErr, AppError } from "_lib/Error/AppError";
 
 type Payload  = {
     id: number
@@ -54,9 +53,7 @@ export class ValkeyMatch implements MatchCache {
             .hset(playerDataKey, payload)
             .exec((err, _) => {
                 if(err)
-                    throw new AppError(
-                        AppErr.DBInternal,
-                        "Something went wrong in `ValkeyMatch<enqueue>")
+                    console.error(err)
             })
     }
 
@@ -73,9 +70,7 @@ export class ValkeyMatch implements MatchCache {
             .del(...playerDataKey)
             .exec((err, _) => {
                 if(err)
-                    throw new AppError(
-                        AppErr.DBInternal,
-                        "Something went wrong in `ValkeyMatch<enqueue>")
+                    console.error(err)
             })
     }
 }

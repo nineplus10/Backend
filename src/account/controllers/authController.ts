@@ -1,9 +1,9 @@
 import { NextFunction, Request, Response } from "express";
-import { AppErr, AppError } from "_lib/Error/AppError";
+import { AppErr, AppError } from "_lib/Error/http/AppError";
 import { ZodValidator } from "_lib/Validator/zod";
 import { AuthService } from "account/services/auth";
 import { z } from "zod";
-import { AuthenticatedRequest } from "_lib/Middlewares/AuthChecker";
+import { AuthenticatedRequest } from "account/_lib/Middlewares/AuthChecker";
 import { RefreshRequest } from "account/_lib/Middlewares/RefreshTokenChecker";
 
 const LOGIN_PAYLOAD = z.object({

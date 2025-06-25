@@ -1,4 +1,4 @@
-import { Message, Response, OnErrorFx } from "gameClient/_lib/Websocket";
+import { Message, Response, OnErrorFx } from "_lib/Websocket";
 
 export type WsServeFx = (
     msg: Message, 

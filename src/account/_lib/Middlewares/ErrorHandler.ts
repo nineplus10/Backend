@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express"
-import { DomainError } from "_lib/Error/DomainError";
-import { AppErr, AppError } from "_lib/Error/AppError";
+import { DomainError } from "_lib/Error/http/DomainError";
+import { AppErr, AppError } from "_lib/Error/http/AppError";
 
 export class ErrorHandler {
     constructor() {}

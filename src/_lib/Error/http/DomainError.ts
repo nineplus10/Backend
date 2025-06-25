@@ -1,4 +1,4 @@
-import { ErrSpecEntry } from "./index.ts"
+import { ErrSpecEntry } from "../index.ts"
 
 export enum DomainErr {
     InvalidValue = "InvalidValue",

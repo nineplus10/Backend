@@ -1,4 +1,4 @@
-import { AuthChecker } from "_lib/Middlewares/AuthChecker";
+import { AuthChecker } from "account/_lib/Middlewares/AuthChecker";
 import { ProfileController } from "account/controllers/profileController";
 import express, { Router } from "express";
 

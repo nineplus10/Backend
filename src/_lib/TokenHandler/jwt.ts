@@ -1,6 +1,6 @@
 import jwt, { JwtPayload } from "jsonwebtoken";
-import { TokenHandler } from "./TokenHandler.ts"
-import { TokenParser } from "_lib/TokenHandler/TokenParser/TokenParser.ts";
+import { TokenHandler } from "./index.ts"
+import { TokenParser } from "_lib/TokenHandler/Parser/index.ts";
 
 export class Jwt implements TokenHandler {
     constructor(
