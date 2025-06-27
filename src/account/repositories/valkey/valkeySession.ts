@@ -72,6 +72,8 @@ export class ValkeySession implements SessionCache {
         return await this._conn
             .hgetall(sessionInfoKey.join(":"))
             .then(result => {
+                if(!result["playerId"])
+                    return undefined
                 return Session.create({ // Wish there's some kind of safety net here
                     playerId: Number(result["playerId"]),
                     token: result["token"],

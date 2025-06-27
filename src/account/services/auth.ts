@@ -64,10 +64,7 @@ export class AuthService {
                     isOk: ok 
                 })
 
-                return Promise.all([
-                    (async() => ok)(),
-                    this._playerRepo.addAuthAttempt(a)
-                ])
+                return Promise.all([ ok, this._playerRepo.addAuthAttempt(a) ])
             })
             .then(([ok, _]) => {
                 if(!ok)
