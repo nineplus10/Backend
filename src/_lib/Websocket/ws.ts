@@ -7,6 +7,7 @@ import { z } from "zod";
 import { ZodValidator } from "_lib/Validator/zod";
 import { AppErr, AppError } from "_lib/Error/http/AppError";
 import { URL } from "url";
+import { AccountApi } from "_lib/api/account";
 
 export class WsResponse implements Response {
     meta: Response["meta"];
@@ -68,54 +69,6 @@ export class WsApp {
             connection: WebSocket
         }
     }
-
-    // TODO: Consider this to be moved somewhere
-    private async checkAuth(
-        authEndpoint: string, 
-        userAgent: string,
-        token: string,
-    ): Promise<{access: string, refresh: string}>  {
-        return await fetch(authEndpoint, {
-                method: "POST",
-                headers: {
-                    "User-Agent": userAgent,
-                    "Content-Type": "application/x-www-form-urlencoded"
-                },
-                body: new URLSearchParams({
-                    refresh_token: token
-                })        
-            })
-            .then(res => {
-                return Promise.all([ res.status, res.json() ])
-            })
-            .then(([statusCode, payload]) => {
-                if(statusCode != 200) {
-                    switch(statusCode) {
-                        case 400: throw new Error("TOKEN_NOT_FOUND")
-                        case 401: throw new Error("TOKEN_INVALID")
-                        default: throw new Error("UNKNOWN_REASON")
-                    }
-                }
-
-                let accessTokenOk = true, refreshTokenOk = true
-                if(!payload.accessToken) {
-                    accessTokenOk = false
-                    console.log("[Game] WARN: Missing `accessToken` after successful refresh")
-                }
-                if(!payload.refreshToken) {
-                    refreshTokenOk = false
-                    console.log("[Game] WARN: Missing `refreshToken` after successful refresh")
-                }
-                if(!accessTokenOk || !refreshTokenOk)
-                    throw new Error("MALFORMED_NEW_TOKEN")
-            
-                return {
-                    access: payload.accessToken,
-                    refresh: payload.refreshToken
-                }
-            })
-    }
-
 
     constructor( 
         private readonly _router: WsRouter,
@@ -191,11 +144,11 @@ export class WsApp {
                 return
             }
 
-            await this.checkAuth(authEndpoint, userAgent, token)
+            await AccountApi.checkAuth(authEndpoint, userAgent, token)
                 .then(newToken => {
                     this._wsSrv.handleUpgrade(req, socket, head, ws => {
-                        ws.send(JSON.stringify(newToken))
                         console.log(`[Game] Allow \`${req.socket.remoteAddress}\``)
+                        new WsResponse(ws.send.bind(ws)) .send(newToken)
                         this._wsSrv.emit("connection", ws, req)
                     })
                 })
