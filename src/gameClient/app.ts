@@ -10,7 +10,7 @@ export class GameClientModule {
         const valkey = new Valkey(gameEnv.CACHE_URL)
 
         const router = await GameClientRouterV1.create(valkey.conn, kafka)
-        const app = new WsApp(router)
+        const app = new WsApp(router, gameEnv.AUTH_REFRESH_URL)
         return app.server.listen(listenPort, () => {
             console.log(`[GameClient] Up and running on ${listenPort}`)
         })
