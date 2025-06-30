@@ -14,6 +14,7 @@ import { ValkeySession } from "account/repositories/valkey/valkeySession";
 import { Valkey } from "_lib/Persistence/Valkey";
 import { accountEnv } from "account/env";
 import { RefreshTokenChecker } from "account/_lib/Middlewares/RefreshTokenChecker";
+import { ApiTokenChecker } from "account/_lib/Middlewares/ApiTokenChecker";
 
 export class AccountRouterV1 {
     private readonly _router: Router
@@ -31,7 +32,8 @@ export class AccountRouterV1 {
                                         accountEnv.REFRESH_TOKEN_LIFETIME,
                                         tokenParser),
             authValidator = new AuthChecker(accessTokenHandler),
-            refreshTokenChecker = new RefreshTokenChecker(refreshTokenHandler)
+            refreshTokenChecker = new RefreshTokenChecker(refreshTokenHandler),
+            apiTokenChecker = new ApiTokenChecker(refreshTokenHandler)
 
         const playerRepo = new PrismaPlayer()
         const sessionCache = new ValkeySession(vk.conn)
@@ -50,7 +52,11 @@ export class AccountRouterV1 {
 
         const 
             profileRouter = new ProfileRouter(profileController, authValidator),
-            authRouter = new AuthRouter(authController, authValidator, refreshTokenChecker)
+            authRouter = new AuthRouter(
+                            authController, 
+                            authValidator, 
+                            refreshTokenChecker, 
+                            apiTokenChecker)
 
         this._router = express.Router()
         this._router.use("/auth", authRouter.router)

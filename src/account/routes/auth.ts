@@ -1,3 +1,4 @@
+import { ApiTokenChecker } from "account/_lib/Middlewares/ApiTokenChecker";
 import { AuthChecker } from "account/_lib/Middlewares/AuthChecker";
 import { RefreshTokenChecker } from "account/_lib/Middlewares/RefreshTokenChecker";
 import { AuthController } from "account/controllers/authController";
@@ -8,7 +9,8 @@ export class AuthRouter {
     constructor(
         authController: AuthController,
         authValidator: AuthChecker,
-        refreshTokenChecker: RefreshTokenChecker
+        refreshTokenChecker: RefreshTokenChecker,
+        apiTokenChecker: ApiTokenChecker
     ) {
         this._router = express.Router()
         this._router.post("/login", authController.login.bind(authController))
@@ -20,6 +22,10 @@ export class AuthRouter {
         this._router.post("/revoke", 
             authValidator.validate.bind(authValidator),
             authController.revoke.bind(authController))
+        this._router.post("/infer",
+            refreshTokenChecker.validate.bind(refreshTokenChecker),
+            apiTokenChecker.handle.bind(apiTokenChecker),
+            authController.infer.bind(authController))
     }
 
     get router(): Router {return this._router}

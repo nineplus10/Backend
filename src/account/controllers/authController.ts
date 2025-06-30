@@ -109,4 +109,29 @@ export class AuthController {
             })
             .catch(err => next(err))
     }
+
+    async infer(req: RefreshRequest, res: Response, next: NextFunction) {
+        const 
+            userAgent = req.headers["user-agent"] ?? "",
+            playerId = req.refreshToken!.payload.playerId,
+            token = req.refreshToken!.token
+
+        await this._authService
+            .refresh(playerId, token,userAgent)
+            .then(tokenPair => {
+                return Promise.all([
+                    tokenPair,
+                    this._authService.decodeRefreshToken(token)
+                ])
+            })
+            .then(([tokenPair, payload]) => {
+                const {access, refresh} = tokenPair
+                res.status(200).send({
+                    accessToken: access,
+                    refreshToken: refresh,
+                    data: payload
+                })
+            })
+            .catch(err => next(err))
+    }
 }

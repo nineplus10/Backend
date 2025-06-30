@@ -135,6 +135,7 @@ export class AuthService {
         let activeSession: Session
         let newTokens: TokenPair
 
+        const payload = { playerId: playerId }
         return await this._sessionCache
             .find(playerId, userAgent)
             .then(session => {
@@ -161,8 +162,8 @@ export class AuthService {
                         "Token is invalid for this session")
 
                 return Promise.all([
-                    this._refreshTokenHandler.encode({playerId: playerId}),
-                    this._accessTokenHandler.encode({ playerId: playerId })
+                    this._refreshTokenHandler.encode(payload),
+                    this._accessTokenHandler.encode(payload)
                 ])
             })
             .then(([refreshToken, accessToken]) => {
@@ -180,6 +181,11 @@ export class AuthService {
                 return this._sessionCache.create(s)
             })
             .then(_ => newTokens)
+    }
+
+    async decodeRefreshToken(token: string): Promise<any> { 
+        const payload = await this._refreshTokenHandler.decode(token)
+        return payload
     }
 
     async revoke(
