@@ -3,9 +3,6 @@ import { z } from "zod"
 
 configDotenv({path: ".env"})
 const validator = z.object({
-    /**
-     * Endpoint for the cache used by this application
-     * */
     CACHE_URL: z.string().url(),
 
     /**
@@ -27,10 +24,18 @@ const validator = z.object({
         matchmaking: z.string()
     }),
 
+    /**
+     * API key used to communicate with service-exclusive endpoints in `Account`
+     * service
+     */
+    ACCOUNT_API_KEY: z.string(),
+
+    /** URL for refreshing user token in `Account` service */
     AUTH_REFRESH_URL: z.string().url()
 })
 
 const gameEnv = validator.parse({
+    ACCOUNT_API_KEY: process.env.MM_ACCOUNT_API_KEY,
     AUTH_REFRESH_URL: `${process.env.MM_ACCOUNT_URL}${process.env.MM_REFRESH_PATH}`,
     CACHE_URL: process.env.MM_CACHE_URL,
     BROKER_URL: ["broker:19092"],

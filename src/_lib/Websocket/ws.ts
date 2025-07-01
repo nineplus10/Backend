@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { createServer, Server } from "http";
+import { createServer, IncomingMessage, Server } from "http";
 import { WebSocket, WebSocketServer } from "ws";
 import { WsRouter } from "gameClient/routes";
 import { Message, Response } from ".";
@@ -8,6 +8,8 @@ import { ZodValidator } from "_lib/Validator/zod";
 import { AppErr, AppError } from "_lib/Error/http/AppError";
 import { URL } from "url";
 import { AccountApi } from "_lib/api/account";
+import Stream from "stream";
+import { WebsocketCache } from "gameClient/repository/websocket";
 
 export class WsResponse implements Response {
     meta: Response["meta"];
@@ -66,102 +68,141 @@ export class WsApp {
     private readonly _wsSrv: WebSocketServer
     private readonly _connections: {
         [k: ReturnType<typeof randomUUID>]: {
+            playerId: number
             connection: WebSocket
         }
     }
 
-    constructor( 
-        private readonly _router: WsRouter,
-        authEndpoint: string
+    /**
+     * Rejects HTTP Upgrade request by sending HTTP response via raw connection 
+     * then destroying the socket.
+     * 
+     * @param req 
+     * @param socket 
+     * @param statusCode - The statusCode related to the rejection
+     * @param errorName - The name of the error related to the rejection
+     * @param reason - The reason of rejection
+     *
+     * @see 
+     * - https://stackoverflow.com/questions/62447895/node-js-express-send-raw-http-responses, 
+     * - https://ably.com/blog/websocket-authentication
+    */
+    private rejectUpgrade(
+        req: IncomingMessage,
+        socket: Stream.Duplex, 
+        statusCode: number, 
+        errorName: string,
+        reason: string,
     ) {
-        this._wsSrv = new WebSocketServer({noServer: true })
-        this._wsSrv.on("connection", (ws, _) => {
-            const res = new WsResponse(ws.send.bind(ws))
-            const id = randomUUID()
-            this._connections[id] = {
-                connection: ws
-            }
-
-            ws.on("error", console.error)
-            ws.on("close", (code: number, reason) => {
-                ws.close(code, reason)
-                delete this._connections[id]
-            })
-
-            ws.on("message", data => {
-                let payload,
-                    msg: WsMessage;
-                try {
-                    payload = JSON.parse(data.toString())
-                    msg = new WsMessage(payload)
-                } catch(err) {
-                    if(err instanceof SyntaxError) {
-                        res.status("ERR")
-                            .send("Only valid JSON payload is supported")
-                    } else if(err instanceof AppError) {
-                        res.status("ERR")
-                            .send("Invalid message structure")
-                    }
-                    return
-                }
-
-                this._router.serve(msg, res, (err: Error) => {
-                    res.status("ERR")
-                        .reason(err.message)
-                        .send()
-                })
-            })
+        console.log(`[Game] Reject \`${req.socket.remoteAddress}\`: ${errorName}`)
+        const payload = JSON.stringify({
+            message: errorName,
+            description: reason 
         })
 
-        // TODO: refactor
-        // http upgrade: https://github.com/websockets/ws?tab=readme-ov-file#multiple-servers-sharing-a-single-https-server
-        // send raw response: 
-        // - https://stackoverflow.com/questions/62447895/node-js-express-send-raw-http-responses
-        // - https://ably.com/blog/websocket-authentication
+        socket.write(
+            `HTTP/1.1 ${statusCode} Bad Request\r\n
+            Content-Type: application/json\r\n
+            Content-Length: ${payload.length}\r\n
+            \r\n
+            ${payload} `
+        )
+        socket.destroy()
+    }
+
+     
+    // HTTP upgrade: https://github.com/websockets/ws?tab=readme-ov-file#multiple-servers-sharing-a-single-https-server
+    constructor( 
+        router: WsRouter,
+        authEndpoint: string,
+        accountApi: AccountApi,
+        websocketCache: WebsocketCache,
+    ) {
+        this._wsSrv = new WebSocketServer({noServer: true })
         this._srv = createServer()
         this._srv.on("upgrade", async(req, socket, head) => {
             const parsedUrl = URL.parse(req.url!, `http://${req.headers.host}`)
             const token = parsedUrl?.searchParams.get("token")
             const userAgent = req.headers["user-agent"]
             if(!token || !userAgent) {
-                console.log(`[Game] Reject \`${req.socket.remoteAddress}\`: TOKEN_MISSING`)
-                // TODO: Send error response
-
-                // const payload = JSON.stringify({
-                //     message: "TOKEN_MISSING",
-                //     description: "`token` could not be found on query params"
-                // })
-
-                // socket.write(
-                //     `HTTP/1.1 400 Bad Request\r\n
-                //     Content-Type: application/json\r\n
-                //     Content-Length: ${payload.length}\r\n
-                //     \r\n
-                //     ${payload}
-                //     `
-                // )
-                socket.destroy()
+                this.rejectUpgrade(req, socket, 
+                    400, "BAD_REQUEST", "Both token and user agent should be provided")
                 return
             }
 
-            await AccountApi.checkAuth(authEndpoint, userAgent, token)
-                .then(newToken => {
-                    this._wsSrv.handleUpgrade(req, socket, head, ws => {
-                        console.log(`[Game] Allow \`${req.socket.remoteAddress}\``)
-                        new WsResponse(ws.send.bind(ws)) .send(newToken)
-                        this._wsSrv.emit("connection", ws, req)
-                    })
+            let authOk = true
+            const newToken = {refresh: "", access: ""}
+            const tokenData = {playerId: -1}
+            await accountApi.checkAuth(authEndpoint, userAgent, token)
+                .then(res => {
+                    newToken.refresh = res.refresh
+                    newToken.access = res.access
+                    tokenData.playerId = res.playerId
                 })
-                .catch((err: Error) => {
-                    // TODO: Send error response
-                    console.log(`[Game] Reject \`${req.socket.remoteAddress}\`: ${err}`)
-                    socket.destroy()
-                    return ""
+                .catch(err => {
+                    authOk = false
+                    this.rejectUpgrade(req, socket, 
+                        500, "INTERNAL_ERROR", err.message)
                 })
 
+            if(!authOk) return
+
+            this._wsSrv.handleUpgrade(req, socket, head, async(ws, req) => {
+                const connectionId = randomUUID()
+                this._connections[connectionId] = {
+                    playerId: tokenData.playerId,
+                    connection: ws
+                }
+                await websocketCache.save(tokenData.playerId, connectionId)
+
+                ws.on("error", console.error)
+                ws.on("close", async(code: number, reason) => {
+                    await websocketCache.remove(this._connections[connectionId].playerId)
+                    delete this._connections[connectionId]
+                    ws.close(code, reason)
+                })
+
+                const res = new WsResponse(ws.send.bind(ws))
+                ws.on("message", data => {
+                    let payload,
+                        msg: WsMessage;
+                    try {
+                        payload = JSON.parse(data.toString())
+                        payload.data = {
+                            ...payload.data,
+                            playerId:tokenData.playerId 
+                        }
+                        msg = new WsMessage(payload)
+                    } catch(err) {
+                        if(err instanceof SyntaxError) {
+                            res.status("ERR")
+                                .send("Only valid JSON payload is supported")
+                        } else {
+                            res.status("ERR")
+                                .send("Invalid message structure")
+                        }
+                        return
+                    }
+
+                    router.serve(msg, res, (err: Error) => {
+                        res.status("ERR")
+                            .reason(err.message)
+                            .send()
+                    })
+                })
+
+                console.log(`[Game] Allow \`${req.socket.remoteAddress}\``)
+                res.send({...tokenData, ...newToken})
+            })
         })
 
         this._connections = {}
+    }
+
+    sendMessageTo(connectionId: ReturnType<typeof randomUUID>) {
+        const conn = this._connections[connectionId].connection
+        const res = new WsResponse(conn.send.bind(conn))
+        res.send({message: "Testing"})
     }
 
     get websocket(): WsApp["_wsSrv"] {return this._wsSrv}

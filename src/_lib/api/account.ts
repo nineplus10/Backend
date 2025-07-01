@@ -1,14 +1,36 @@
+import { AppErr, AppError } from "_lib/Error/http/AppError"
+import { ZodValidator } from "_lib/Validator/zod"
+import { z } from "zod"
+
+const 
+    CHECK_AUTH_OK_PAYLOAD = z.object({
+        data: z.object({
+            playerId: z.number()
+        }),
+        accessToken: z.string(),
+        refreshToken: z.string()
+    }),
+    CHECK_AUTH_ERR_PAYLOAD = z.object({
+        message: z.string(),
+        description: z.string()
+    })
+
 export class AccountApi {
-    static async checkAuth(
+    constructor(
+        private readonly _apiKey: string
+    ) { }
+
+    async checkAuth(
         authEndpoint: string, 
         userAgent: string,
         token: string,
-    ): Promise<{access: string, refresh: string}>  {
+    ): Promise< { playerId: number, access: string, refresh: string } >  {
         return await fetch(authEndpoint, {
                 method: "POST",
                 headers: {
                     "User-Agent": userAgent,
-                    "Content-Type": "application/x-www-form-urlencoded"
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "X-API-key": this._apiKey
                 },
                 body: new URLSearchParams({
                     refresh_token: token
@@ -19,28 +41,38 @@ export class AccountApi {
             })
             .then(([statusCode, payload]) => {
                 if(statusCode != 200) {
+                    let errName;
                     switch(statusCode) {
-                        case 400: throw new Error("TOKEN_NOT_FOUND")
-                        case 401: throw new Error("TOKEN_INVALID")
-                        default: throw new Error("UNKNOWN_REASON")
+                        case 400: errName = AppErr.BadRequest; break;
+                        case 401: errName = AppErr.Unauthorized; break;
+                        case 404: errName = AppErr.NotFound; break;
+                        default: errName = AppErr.Internal; break;
                     }
+
+                    const validator = new ZodValidator<
+                        z.infer<typeof CHECK_AUTH_ERR_PAYLOAD>
+                            >(CHECK_AUTH_ERR_PAYLOAD)
+                    const {error, data} = validator.validate(payload)
+                    if(error) {
+                        console.log("[Game] WARN: response shape doesn't match with the expected schema")
+                        throw new AppError(errName, "Sorry, we couldn't identify what went wrong for now!") 
+                    }
+                    throw new AppError(errName, data.description) 
                 }
 
-                let accessTokenOk = true, refreshTokenOk = true
-                if(!payload.accessToken) {
-                    accessTokenOk = false
-                    console.log("[Game] WARN: Missing `accessToken` after successful refresh")
-                }
-                if(!payload.refreshToken) {
-                    refreshTokenOk = false
-                    console.log("[Game] WARN: Missing `refreshToken` after successful refresh")
-                }
-                if(!accessTokenOk || !refreshTokenOk)
-                    throw new Error("MALFORMED_NEW_TOKEN")
-            
+                const validator = new ZodValidator<
+                    z.infer<typeof CHECK_AUTH_OK_PAYLOAD>
+                        >(CHECK_AUTH_OK_PAYLOAD)
+                const {error, data} = validator.validate(payload)
+                if(error)
+                    throw new AppError(
+                        AppErr.Internal,
+                        `Received payload doesn't fulfill expected schema:\n${validator.getErrMessage(error)}`)
+
                 return {
-                    access: payload.accessToken,
-                    refresh: payload.refreshToken
+                    playerId: data.data.playerId,
+                    access: data.accessToken,
+                    refresh: data.refreshToken
                 }
             })
     }
