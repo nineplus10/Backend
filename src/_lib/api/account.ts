@@ -4,8 +4,10 @@ import { z } from "zod"
 
 const 
     CHECK_AUTH_OK_PAYLOAD = z.object({
-        data: z.object({
-            playerId: z.number()
+        player: z.object({
+            id: z.number(),
+            wins: z.number(),
+            gamePlayed: z.number()
         }),
         accessToken: z.string(),
         refreshToken: z.string()
@@ -20,11 +22,11 @@ export class AccountApi {
         private readonly _apiKey: string
     ) { }
 
-    async checkAuth(
+    async inferWithRefreshToken(
         authEndpoint: string, 
         userAgent: string,
         token: string,
-    ): Promise< { playerId: number, access: string, refresh: string } >  {
+    ): Promise<z.infer<typeof CHECK_AUTH_OK_PAYLOAD>>  {
         return await fetch(authEndpoint, {
                 method: "POST",
                 headers: {
@@ -70,9 +72,9 @@ export class AccountApi {
                         `Received payload doesn't fulfill expected schema:\n${validator.getErrMessage(error)}`)
 
                 return {
-                    playerId: data.data.playerId,
-                    access: data.accessToken,
-                    refresh: data.refreshToken
+                    player: data.player,
+                    accessToken: data.accessToken,
+                    refreshToken: data.refreshToken
                 }
             })
     }

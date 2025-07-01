@@ -183,11 +183,6 @@ export class AuthService {
             .then(_ => newTokens)
     }
 
-    async decodeRefreshToken(token: string): Promise<any> { 
-        const payload = await this._refreshTokenHandler.decode(token)
-        return payload
-    }
-
     async revoke(
         playerId: number,
         userAgent: string,
@@ -195,5 +190,25 @@ export class AuthService {
     ): Promise<void> {
         return await this._sessionCache
             .revoke(playerId, userAgent)
+    }
+
+    async inferAndRefresh(
+        playerId: number,
+        token: string,
+        userAgent: string,
+        _: string = "" // Future feature: Origin
+    ): Promise<[Player, TokenPair]> {
+        return await this._playerRepo
+            .findById(playerId)
+            .then(p => {
+                if(!p)
+                    throw new AppError(
+                        AppErr.NotFound,
+                        "Player not found")
+                return Promise.all([
+                    p, this.refresh(playerId, token, userAgent, _)
+                ])
+            })
+            .then(res => res)
     }
 }

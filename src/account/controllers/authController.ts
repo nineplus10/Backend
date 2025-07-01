@@ -117,20 +117,18 @@ export class AuthController {
             token = req.refreshToken!.token
 
         await this._authService
-            .refresh(playerId, token,userAgent)
-            .then(tokenPair => {
-                return Promise.all([
-                    tokenPair,
-                    this._authService.decodeRefreshToken(token)
-                ])
-            })
-            .then(([tokenPair, payload]) => {
-                const {access, refresh} = tokenPair
-                res.status(200).send({
-                    accessToken: access,
-                    refreshToken: refresh,
-                    data: payload
-                })
+            .inferAndRefresh(playerId, token, userAgent)
+            .then(([player, tokens]) => {
+                res.status(200)
+                    .send({
+                        player: {
+                            id: player.id,
+                            wins: player.stats.wins,
+                            gamePlayed: player.stats.gamePlayed
+                        },
+                        accessToken: tokens.access,
+                        refreshToken: tokens.refresh
+                    })
             })
             .catch(err => next(err))
     }

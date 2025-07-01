@@ -68,7 +68,11 @@ export class WsApp {
     private readonly _wsSrv: WebSocketServer
     private readonly _connections: {
         [k: ReturnType<typeof randomUUID>]: {
-            playerId: number
+            player: {
+                id: number,
+                wins: number,
+                gamePlayed: number
+            },
             connection: WebSocket
         }
     }
@@ -131,13 +135,19 @@ export class WsApp {
             }
 
             let authOk = true
-            const newToken = {refresh: "", access: ""}
-            const tokenData = {playerId: -1}
-            await accountApi.checkAuth(authEndpoint, userAgent, token)
+            let newToken = {refresh: "", access: ""}
+            let tokenData = { playerId: -1, wins: -1, gamePlayed: -1 }
+            await accountApi.inferWithRefreshToken(authEndpoint, userAgent, token)
                 .then(res => {
-                    newToken.refresh = res.refresh
-                    newToken.access = res.access
-                    tokenData.playerId = res.playerId
+                    newToken = {
+                        refresh: res.refreshToken,
+                        access: res.accessToken
+                    }
+                    tokenData = {
+                        playerId: res.player.id,
+                        wins: res.player.wins,
+                        gamePlayed: res.player.gamePlayed
+                    }
                 })
                 .catch(err => {
                     authOk = false
@@ -150,14 +160,19 @@ export class WsApp {
             this._wsSrv.handleUpgrade(req, socket, head, async(ws, req) => {
                 const connectionId = randomUUID()
                 this._connections[connectionId] = {
-                    playerId: tokenData.playerId,
+                    player: {
+                        id: tokenData.playerId,
+                        wins: tokenData.playerId,
+                        gamePlayed: tokenData.gamePlayed
+                    },
                     connection: ws
                 }
                 await websocketCache.save(tokenData.playerId, connectionId)
 
                 ws.on("error", console.error)
                 ws.on("close", async(code: number, reason) => {
-                    await websocketCache.remove(this._connections[connectionId].playerId)
+                    const connectionOwner = this._connections[connectionId].player.id
+                    await websocketCache.remove(connectionOwner)
                     delete this._connections[connectionId]
                     ws.close(code, reason)
                 })
