@@ -4,7 +4,7 @@ import { GameClientRouterV1 } from "./routes/app"
 import { gameEnv } from "./env"
 import { WsApp } from "../_lib/Websocket/ws"
 import { ValkeyMatch } from "./repository/valkey/valkeyMatch"
-import { HighestWinsMatchmaker } from "./domain/services/matchmaker/highestWins"
+import { HighestWinRateMatchmaker } from "./domain/services/matchmaker/highestWinRate"
 import { MatchService } from "./services/match"
 import { MatchController } from "./controller/match"
 import { MatchRouter } from "./routes/match"
@@ -21,7 +21,8 @@ export class GameClientModule {
         const matchCache = new ValkeyMatch(valkey.conn)
         const websocketCache = new ValkeyWebsocket(valkey.conn)
     
-        const matchService = new MatchService(matchCache, new HighestWinsMatchmaker())
+        const matchService = new MatchService(
+            matchCache, new HighestWinRateMatchmaker())
 
         const matchController = new MatchController(matchService)
 

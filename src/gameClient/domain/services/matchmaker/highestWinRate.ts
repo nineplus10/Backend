@@ -2,12 +2,14 @@ import { Player } from "gameClient/domain/entities/player";
 import { Matchmaker } from ".";
 import { Match } from "gameClient/domain/match";
 
-export class HighestWinsMatchmaker implements Matchmaker {
+export class HighestWinRateMatchmaker implements Matchmaker {
     private sort(players: Player[]): Player[] {
         if(players.length == 1) {
             return players
         } else if(players.length == 2) {
-            return players[0].wins > players[1].wins
+            const winRateP1 = players[0].wins / players[0].gamePlayed
+            const winRateP2 = players[1].wins / players[1].gamePlayed
+            return winRateP1 > winRateP2
                 ? [players[0], players[1]]
                 : [players[1], players[0]]
         } 
@@ -22,7 +24,9 @@ export class HighestWinsMatchmaker implements Matchmaker {
             sIdx = 0
 
         while(lIdx + rIdx < players.length) {
-            if(lhs[lIdx].wins > rhs[rIdx].wins) {
+            const lhsWinrate = lhs[lIdx].wins / lhs[lIdx].gamePlayed
+            const rhsWinrate = rhs[rIdx].wins / rhs[rIdx].gamePlayed
+            if(lhsWinrate > rhsWinrate) {
                 sortedPlayers[sIdx] = lhs[lIdx]
                 lIdx++
             } else {
