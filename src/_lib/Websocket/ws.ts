@@ -68,11 +68,7 @@ export class WsApp {
     private readonly _wsSrv: WebSocketServer
     private readonly _connections: {
         [k: ReturnType<typeof randomUUID>]: {
-            player: {
-                id: number,
-                wins: number,
-                gamePlayed: number
-            },
+            player: number,
             connection: WebSocket
         }
     }
@@ -121,9 +117,12 @@ export class WsApp {
         authEndpoint: string,
         accountApi: AccountApi,
         websocketCache: WebsocketCache,
+        onDisconnect: (connectionOwner: number) => Promise<void>
     ) {
+        this._connections = {}
         this._wsSrv = new WebSocketServer({noServer: true })
         this._srv = createServer()
+
         this._srv.on("upgrade", async(req, socket, head) => {
             const parsedUrl = URL.parse(req.url!, `http://${req.headers.host}`)
             const token = parsedUrl?.searchParams.get("token")
@@ -135,16 +134,21 @@ export class WsApp {
             }
 
             let authOk = true
-            let newToken = {refresh: "", access: ""}
-            let tokenData = { playerId: -1, wins: -1, gamePlayed: -1 }
+            const tokenPayload = {
+                refreshToken: "", 
+                accessToken: "",
+                player: {
+                    id: -1, 
+                    wins: -1, 
+                    gamePlayed: -1 
+                }
+            }
             await accountApi.inferWithRefreshToken(authEndpoint, userAgent, token)
                 .then(res => {
-                    newToken = {
-                        refresh: res.refreshToken,
-                        access: res.accessToken
-                    }
-                    tokenData = {
-                        playerId: res.player.id,
+                    tokenPayload.refreshToken = res.refreshToken,
+                    tokenPayload.accessToken = res.accessToken
+                    tokenPayload.player = {
+                        id: res.player.id,
                         wins: res.player.wins,
                         gamePlayed: res.player.gamePlayed
                     }
@@ -160,32 +164,28 @@ export class WsApp {
             this._wsSrv.handleUpgrade(req, socket, head, async(ws, req) => {
                 const connectionId = randomUUID()
                 this._connections[connectionId] = {
-                    player: {
-                        id: tokenData.playerId,
-                        wins: tokenData.playerId,
-                        gamePlayed: tokenData.gamePlayed
-                    },
+                    player: tokenPayload.player.id,
                     connection: ws
                 }
-                await websocketCache.save(tokenData.playerId, connectionId)
+                await websocketCache.save(tokenPayload.player.id, connectionId)
 
                 ws.on("error", console.error)
                 ws.on("close", async(code: number, reason) => {
-                    const connectionOwner = this._connections[connectionId].player.id
-                    await websocketCache.remove(connectionOwner)
+                    const connectionOwner = this._connections[connectionId].player
+                    await onDisconnect(connectionOwner)
+
                     delete this._connections[connectionId]
                     ws.close(code, reason)
                 })
 
                 const res = new WsResponse(ws.send.bind(ws))
                 ws.on("message", data => {
-                    let payload,
-                        msg: WsMessage;
+                    let msg: WsMessage;
                     try {
-                        payload = JSON.parse(data.toString())
+                        const payload = JSON.parse(data.toString())
                         payload.data = {
                             ...payload.data,
-                            playerId:tokenData.playerId 
+                            player: tokenPayload.player
                         }
                         msg = new WsMessage(payload)
                     } catch(err) {
@@ -207,17 +207,16 @@ export class WsApp {
                 })
 
                 console.log(`[Game] Allow \`${req.socket.remoteAddress}\``)
-                res.send({...tokenData, ...newToken})
+                res.send(tokenPayload)
             })
         })
-
-        this._connections = {}
     }
 
-    sendMessageTo(connectionId: ReturnType<typeof randomUUID>) {
-        const conn = this._connections[connectionId].connection
-        const res = new WsResponse(conn.send.bind(conn))
-        res.send({message: "Testing"})
+    sendMessageTo(connectionId: ReturnType<typeof randomUUID>, payload: any): boolean {
+        const connection = this._connections[connectionId].connection
+        const res = new WsResponse(connection.send.bind(connection))
+        res.send(payload)
+        return true
     }
 
     get websocket(): WsApp["_wsSrv"] {return this._wsSrv}

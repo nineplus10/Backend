@@ -1,4 +1,3 @@
-import { randomUUID } from "crypto";
 import { WebsocketCache } from "../websocket";
 import valkey from "iovalkey";
 
@@ -13,7 +12,7 @@ export class ValkeyWebsocket implements WebsocketCache {
 
     async find(
         ...playerId: number[]
-    ): Promise<(ReturnType<typeof randomUUID> | undefined)[]> {
+    ): Promise<(string | undefined)[]> {
         if(playerId.length == 0) return []
 
         const keys = playerId.map(pId => this.connectionKey(pId))
@@ -21,7 +20,7 @@ export class ValkeyWebsocket implements WebsocketCache {
             .mget(...keys)
             .then(connectionId => {
                 return connectionId.map(cId => {
-                    return <ReturnType<typeof randomUUID>>cId ?? undefined
+                    return cId ?? undefined
                 })
             })
     }

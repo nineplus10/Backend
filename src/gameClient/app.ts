@@ -10,6 +10,7 @@ import { MatchController } from "./controller/match"
 import { MatchRouter } from "./routes/match"
 import { AccountApi } from "_lib/api/account"
 import { ValkeyWebsocket } from "./repository/valkey/valkeyWebsocket"
+import { randomUUID } from "crypto"
 
 export class GameClientModule {
     static async start(listenPort: number): Promise<GameClientModule> {
@@ -32,21 +33,21 @@ export class GameClientModule {
             router, 
             gameEnv.AUTH_REFRESH_URL, 
             accountApi,
-            websocketCache)
-
-        // const testInterval = setInterval(async() => {
-        //     await matchCache.getWaitingPlayers(10)
-        //         .then(players => {
-        //             const playerIds = players.map(p => p.id!)
-        //             return websocketCache.find(...playerIds)
-        //         })
-        //         .then(connectionIds => {
-        //             connectionIds.forEach(cId => {
-        //                 if(cId)
-        //                     app.sendMessageTo(cId)
-        //             })
-        //         })
-        // }, 3*1000);
+            websocketCache,
+            async(connectionOwner: number) => {
+                await websocketCache.remove(connectionOwner)
+                await matchService.leavePool(connectionOwner)
+            })
+        
+        // const matchmakeInterval = setInterval(async() => {
+        //     await matchController.matchmake(
+        //         (connectionId: string, payload: object) => {
+        //             app.sendMessageTo(
+        //                 <ReturnType<typeof randomUUID>> connectionId,
+        //                 payload)
+        //         }
+        //     )
+        // }, 3*1000)
 
         return app.server.listen(listenPort, () => {
             console.log(`[GameClient] Up and running on ${listenPort}`)

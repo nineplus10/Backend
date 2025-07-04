@@ -35,13 +35,11 @@ export class MatchService {
                     : Math.floor(50 * reducerCoef),
             N_MAX_PLAYER_PER_BATCH = 1000
 
-        // console.log(`Minimum players: ${N_MINIMUM_PLAYER_PER_BATCH}`)
-        const matches = await this._matchCache
+        return await this._matchCache
             .getWaitingPlayers(N_MAX_PLAYER_PER_BATCH)
             .then(players => {
                 if(players.length < N_MINIMUM_PLAYER_PER_BATCH) {
                     if(this._attemptSkipped < attemptSkipCap) {
-                        // console.log("Backing off... ")
                         this._attemptSkipped++
                     }
                     return []
@@ -52,11 +50,5 @@ export class MatchService {
                 const matches = this._matchMaker.do(players.slice(0, endIdx))
                 return matches
             })
-
-        const matchedPlayers: number[] = []
-        matches.forEach(m => matchedPlayers.push(m.player1.id!, m.player2.id!))
-        await this._matchCache
-            .dequeue(...matchedPlayers)
-        return matches
     }
 }
