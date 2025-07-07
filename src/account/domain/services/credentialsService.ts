@@ -6,8 +6,7 @@ export class CredentialsService {
         username: string, 
         email: string
     ): Promise<boolean> {
-        return await userRepo
-            .findByCredentials(username, email)
-            .then(p => p === undefined)
+        const playerWithCredential = await userRepo.findByCredentials(username, email)
+        return playerWithCredential === undefined
     }
 }

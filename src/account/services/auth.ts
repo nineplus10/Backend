@@ -27,72 +27,56 @@ export class AuthService {
         origin: string,
         userAgent: string,
     ): Promise<TokenPair> {
-        let player: Player;
-        let tokens: TokenPair
+        // TODO: Perhaps this could be made into a middleware for generalization?
+        const originCooldown =  
+            await AuthRateLimitService.calculateOriginBackoff(this._playerRepo, origin) 
+        if(originCooldown > 0)
+            throw new AppError(
+                AppErr.TooManyRequest,
+                `Too many failed attempt coming from your IP. Try again in ~${originCooldown} minutes.`)
 
-        return await AuthRateLimitService
-            .calculateOriginBackoff(this._playerRepo, origin) // TODO: Perhaps this could be made into a middleware for generalization?
-            .then(cooldown => {
-                if(cooldown > 0)
-                    throw new AppError(
-                        AppErr.TooManyRequest,
-                        `Too many failed attempt coming from your IP. Try again in ~${cooldown} minutes.`)
-                return this._playerRepo.findByUsername(username)
-            })
-            .then(p => {
-                if(!p)
-                    throw new AppError(
-                        AppErr.NotFound,
-                        "Player not found")
+        const player = await this._playerRepo.findByUsername(username)
+        if(!player)
+            throw new AppError(
+                AppErr.NotFound,
+                "Player not found")
 
-                player = p
-                return AuthRateLimitService
-                    .calculateAccountBackoff( this._playerRepo, p.id!)
+        const accountCooldown = 
+            await AuthRateLimitService.calculateAccountBackoff( this._playerRepo, player.id!)
+        if(accountCooldown > 0)
+            throw new AppError(
+                AppErr.TooManyRequest,
+                `Too many failed attempt coming for this player. Try again in ~${accountCooldown} minutes.`)
+        
+        const 
+            passOk = await this._hasher.compare(password, player.password),
+            attempt = AuthRecord.create({
+                playerId: player.id!,
+                origin: origin,
+                attemptedAt: new Date(),
+                isOk: passOk
             })
-            .then(cooldown => {
-                if(cooldown > 0)
-                    throw new AppError(
-                        AppErr.TooManyRequest,
-                        `Too many failed attempt coming for this player. Try again in ~${cooldown} minutes.`)
-                return this._hasher.compare(password, player.password)
-            })
-            .then(ok => {
-                const a = AuthRecord.create({
-                    playerId: player.id!,
-                    origin: origin,
-                    attemptedAt: new Date(),
-                    isOk: ok 
-                })
+        await this._playerRepo.addAuthAttempt(attempt)
 
-                return Promise.all([ ok, this._playerRepo.addAuthAttempt(a) ])
-            })
-            .then(([ok, _]) => {
-                if(!ok)
-                    throw new AppError(
-                        AppErr.Unauthorized,
-                        "Password doesn't match")
+        if(!passOk)
+            throw new AppError(
+                AppErr.Unauthorized,
+                "Password doesn't match")
 
-                return Promise.all([
-                    this._refreshTokenHandler.encode({playerId: player.id}),
-                    this._accessTokenHandler.encode({ playerId: player.id })
-                ])
+        const 
+            refreshToken = await this._refreshTokenHandler.encode({playerId: player.id}),
+            accessToken = await this._accessTokenHandler.encode({ playerId: player.id }),
+            refreshTokenDigest = await this._hasher.generate(refreshToken),
+            s = Session.create({
+                playerId: player.id!,
+                origin: origin,
+                userAgent: userAgent,
+                token: refreshTokenDigest,
+                issuedAt: new Date()
             })
-            .then(([refreshToken, accessToken]) => {
-                tokens = { refresh: refreshToken, access: accessToken }
-                return this._hasher.generate(refreshToken)
-            })
-            .then(refreshDigest => {
-                const s = Session.create({
-                    playerId: player.id!,
-                    origin: origin,
-                    userAgent: userAgent,
-                    token: refreshDigest,
-                    issuedAt: new Date()
-                })
-                return this._sessionCache
-                    .create(s)
-            })
-            .then(_ => tokens)
+        await this._sessionCache.create(s)
+
+        return { refresh: refreshToken, access: accessToken }
     }
 
     async register(
@@ -106,24 +90,19 @@ export class AuthService {
                 AppErr.BadRequest,
                 "Password and repeat password doesn't match")
 
-        await CredentialsService
-            .getCredentialAvailability(this._playerRepo, username, email)
-            .then(available => {
-                if(!available)
-                    throw new AppError(
-                        AppErr.BadRequest,
-                        "Email or username has been used, please use another")
+        const credentialAvailable = 
+            await CredentialsService.getCredentialAvailability(this._playerRepo, username, email)
+        if(!credentialAvailable)
+            throw new AppError(
+                AppErr.BadRequest,
+                "Email or username has been used, please use another")
 
-                return this._hasher.generate(password)
-            })
-            .then(passDigest => {
-                return this._playerRepo.create(
-                    Handle.create(username),
-                    passDigest,
-                    Email.create(email),
-                    Bio.create(""),
-                )
-            })
+        const passDigest = await this._hasher.generate(password)
+        await this._playerRepo.create(
+            Handle.create(username),
+            passDigest,
+            Email.create(email),
+            Bio.create(""))
     }
 
     async refresh(
@@ -132,55 +111,43 @@ export class AuthService {
         userAgent: string,
         _: string = "" // Future feature: Origin
     ): Promise<TokenPair> {
-        let activeSession: Session
-        let newTokens: TokenPair
-
-        const payload = { playerId: playerId }
-        return await this._sessionCache
-            .find(playerId, userAgent)
-            .then(session => {
-                if(!session)
-                    throw new AppError(
-                        AppErr.Unauthorized,
-                        "No active session found for this user")
+        const session =  await this._sessionCache.find(playerId, userAgent)
+        if(!session)
+            throw new AppError(
+                AppErr.Unauthorized,
+                "No active session found for this user")
                 
-                const hadRevoked =
-                    session.revokedAt 
-                    && Date.now() > session.revokedAt.getTime()
+        const hadRevoked =
+            session.revokedAt 
+            && Date.now() > session.revokedAt.getTime()
                 if(hadRevoked)
                     throw new AppError(
                         AppErr.Unauthorized,
                         "Session has terminated, please login")
 
-                activeSession = session
-                return this._hasher.compare(token, session.token)
-            })
-            .then(ok => {
-                if(!ok)
-                    throw new AppError(
-                        AppErr.Unauthorized,
-                        "Token is invalid for this session")
+        const refreshTokenOk = await this._hasher.compare(token, session.token)
+        if(!refreshTokenOk)
+            throw new AppError(
+                AppErr.Unauthorized,
+                "Token is invalid for this session")
 
-                return Promise.all([
-                    this._refreshTokenHandler.encode(payload),
-                    this._accessTokenHandler.encode(payload)
-                ])
+        const
+            payload = { playerId: playerId },
+            refreshToken = await this._refreshTokenHandler.encode(payload),
+            accessToken = await this._accessTokenHandler.encode(payload)
+
+        const
+            refreshTokenDigest = await this._hasher.generate(refreshToken),
+            newSession = Session.create({
+                playerId: playerId,
+                origin: session.origin,
+                userAgent: session.userAgent,
+                token: refreshTokenDigest,
+                issuedAt: new Date()
             })
-            .then(([refreshToken, accessToken]) => {
-                newTokens = { refresh: refreshToken, access: accessToken }
-                return this._hasher.generate(refreshToken)
-            })
-            .then(refreshDigest => {
-                const s = Session.create({
-                    playerId: playerId,
-                    origin: activeSession.origin,
-                    userAgent: activeSession.userAgent,
-                    token: refreshDigest,
-                    issuedAt: new Date()
-                })
-                return this._sessionCache.create(s)
-            })
-            .then(_ => newTokens)
+        await this._sessionCache.create(newSession)
+
+        return { refresh: refreshToken, access: accessToken }
     }
 
     async revoke(
@@ -188,8 +155,7 @@ export class AuthService {
         userAgent: string,
         _: string = "" // Future feature: Origin
     ): Promise<void> {
-        return await this._sessionCache
-            .revoke(playerId, userAgent)
+        return await this._sessionCache.revoke(playerId, userAgent)
     }
 
     async inferAndRefresh(
@@ -198,17 +164,13 @@ export class AuthService {
         userAgent: string,
         _: string = "" // Future feature: Origin
     ): Promise<[Player, TokenPair]> {
-        return await this._playerRepo
-            .findById(playerId)
-            .then(p => {
-                if(!p)
-                    throw new AppError(
-                        AppErr.NotFound,
-                        "Player not found")
-                return Promise.all([
-                    p, this.refresh(playerId, token, userAgent, _)
-                ])
-            })
-            .then(res => res)
+        const player = await this._playerRepo .findById(playerId)
+        if(!player)
+            throw new AppError(
+                AppErr.NotFound,
+                "Player not found")
+
+        const newToken = await this.refresh(playerId, token, userAgent, _)
+        return [player, newToken]
     }
 }

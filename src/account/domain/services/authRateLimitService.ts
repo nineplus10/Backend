@@ -8,29 +8,27 @@ export class AuthRateLimitService {
         playerRepo: PlayerRepo,
         origin: string
     ): Promise<number> {
-        return await playerRepo
-            .findLastNAttemptByOrigin(origin, AUTH_MAX_FAIL)
-            .then(a => {
-                const hasFailedLately = (
-                    a.length == AUTH_MAX_FAIL
-                    && a.every(a => !a.isOk && a.getCooldown() > 0)
-                )
-                return hasFailedLately? a[0].getCooldown() : 0
-            })
+        const 
+            attempt = await playerRepo.findLastNAttemptByOrigin(origin, AUTH_MAX_FAIL),
+            hasFailedLately = (
+                attempt.length == AUTH_MAX_FAIL
+                && attempt.every(a => !a.isOk && a.getCooldown() > 0)
+            )
+
+        return hasFailedLately? attempt[0].getCooldown() : 0
     }
 
     static async calculateAccountBackoff(
         playerRepo: PlayerRepo,
         playerId: number
     ): Promise<number> {
-        return await playerRepo
-            .findLastNAttempt(playerId, AUTH_MAX_FAIL)
-            .then(a => {
-                const hasFailedLately = (
-                    a.length == AUTH_MAX_FAIL
-                    && a.every(a => !a.isOk && a.getCooldown() > 0)
-                )
-                return hasFailedLately? a[0].getCooldown() : 0
-            })
+        const 
+            attempt = await playerRepo.findLastNAttempt(playerId, AUTH_MAX_FAIL),
+            hasFailedLately = (
+                attempt.length == AUTH_MAX_FAIL
+                && attempt.every(a => !a.isOk && a.getCooldown() > 0)
+            )
+
+        return hasFailedLately? attempt[0].getCooldown() : 0
     }
 }

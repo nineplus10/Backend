@@ -34,16 +34,15 @@ export class ValkeySession implements SessionCache {
     async create(s: Session): Promise<void> {
         const 
             sessionKey = ["player", `${s.playerId}`, "session"].join(":"),
-            sessionInfoKey = ["session", `${s.playerId}`, `${s.userAgent}`].join(":")
-
-        const payload: Payload = { 
-            playerId: s.playerId,
-            token: s.token,
-            userAgent: s.userAgent,
-            origin: s.origin,
-            issuedAt: s.issuedAt.getTime(),
-            revokedAt: undefined,
-        }
+            sessionInfoKey = ["session", `${s.playerId}`, `${s.userAgent}`].join(":"),
+            payload: Payload = { 
+                playerId: s.playerId,
+                token: s.token,
+                userAgent: s.userAgent,
+                origin: s.origin,
+                issuedAt: s.issuedAt.getTime(),
+                revokedAt: undefined,
+            }
 
         // Workaround since directly putting NX (which requires Redis > 7.0) 
         // doesn't work and one couldn't put the flag on `expire` function call
@@ -69,22 +68,20 @@ export class ValkeySession implements SessionCache {
         _: Session["origin"] = "" // Future feature
     ): Promise<Session | undefined> {
         const sessionInfoKey = ["session", `${playerId}`, `${userAgent}`]
-        return await this._conn
-            .hgetall(sessionInfoKey.join(":"))
-            .then(result => {
-                if(!result["playerId"])
-                    return undefined
-                return Session.create({ // Wish there's some kind of safety net here
-                    playerId: Number(result["playerId"]),
-                    token: result["token"],
-                    userAgent: result["userAgent"],
-                    origin: result["origin"],
-                    issuedAt: new Date(Number(result["issuedAt"])),
-                    revokedAt: result["revokedAt"]
-                                ? new Date(Number(result["revokedAt"]))
-                                : undefined,
-                })
-            })
+        const row = await this._conn.hgetall(sessionInfoKey.join(":"))
+
+        if(!row["playerId"])
+            return undefined
+        return Session.create({ // Wish there's some kind of safety net here
+            playerId: Number(row["playerId"]),
+            token: row["token"],
+            userAgent: row["userAgent"],
+            origin: row["origin"],
+            issuedAt: new Date(Number(row["issuedAt"])),
+            revokedAt: row["revokedAt"]
+                        ? new Date(Number(row["revokedAt"]))
+                        : undefined,
+        })
     }
 
     async revoke(
