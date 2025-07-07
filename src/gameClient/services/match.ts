@@ -1,7 +1,7 @@
 import { Player } from "gameClient/domain/entities/player";
 import { MatchCache } from "gameClient/repository/match";
-import { Matchmaker } from "../domain/services/matchmaker";
 import { WebsocketCache } from "gameClient/repository/websocket";
+import { Matchmaker } from "gameClient/domain/services/matchmaker";
 
 const attemptSkipCap = 10
 
@@ -51,7 +51,7 @@ export class MatchService {
         // the identifier of players that are competing in this match?)
 
         const endIdx = Math.floor(players.length / 2) * 2
-        const matches = this._matchMaker.do(players.slice(0, endIdx))
+        const matches = this._matchMaker.find(players.slice(0, endIdx))
         const matchCandidates: number[] = []
         matches.forEach(m => matchCandidates.push(m.player1.id!, m.player2.id!))
 
@@ -62,6 +62,7 @@ export class MatchService {
         const connections = await this._websocketCache.find(...matchCandidates)
         const matchedPlayers: number[] = []
         for(let idx = 0; idx < connections.length / 2; idx++) {
+            console.log(JSON.stringify(matches[idx]))
             const connPlayer1 = connections[idx]
             const connPlayer2 = connections[idx + 1]
             if(!connPlayer1 || !connPlayer2) continue

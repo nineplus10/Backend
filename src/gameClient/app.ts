@@ -4,13 +4,14 @@ import { GameClientRouterV1 } from "./routes/app"
 import { gameEnv } from "./env"
 import { WsApp } from "../_lib/Websocket/ws"
 import { ValkeyMatch } from "./repository/valkey/valkeyMatch"
-import { HighestWinRateMatchmaker } from "./domain/services/matchmaker/highestWinRate"
+import { HighestWinRate } from "./domain/services/matchmaker/strategies/highestWinRate"
 import { MatchService } from "./services/match"
 import { MatchController } from "./controller/match"
 import { MatchRouter } from "./routes/match"
 import { AccountApi } from "_lib/api/account"
 import { ValkeyWebsocket } from "./repository/valkey/valkeyWebsocket"
 import { randomUUID } from "crypto"
+import { Matchmaker } from "./domain/services/matchmaker"
 
 export class GameClientModule {
     static async start(listenPort: number): Promise<GameClientModule> {
@@ -22,7 +23,9 @@ export class GameClientModule {
         const websocketCache = new ValkeyWebsocket(valkey.conn)
     
         const matchService = new MatchService(
-            matchCache, websocketCache, new HighestWinRateMatchmaker())
+            matchCache, 
+            websocketCache, 
+            new Matchmaker(new HighestWinRate()))
 
         const matchController = new MatchController(matchService)
 

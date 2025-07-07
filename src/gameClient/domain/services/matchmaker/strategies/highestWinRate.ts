@@ -1,9 +1,8 @@
 import { Player } from "gameClient/domain/entities/player";
-import { Matchmaker } from ".";
-import { Match } from "gameClient/domain/match";
+import { MatchmakingStrategy } from ".";
 
-export class HighestWinRateMatchmaker implements Matchmaker {
-    private sort(players: Player[]): Player[] {
+export class HighestWinRate implements MatchmakingStrategy {
+    match(players: Player[]): Player[] {
         if(players.length == 1) {
             return players
         } else if(players.length == 2) {
@@ -15,8 +14,8 @@ export class HighestWinRateMatchmaker implements Matchmaker {
         } 
         
         const 
-            lhs = this.sort(players.slice(0, players.length / 2)),
-            rhs = this.sort(players.slice(players.length / 2)),
+            lhs = this.match(players.slice(0, players.length / 2)),
+            rhs = this.match(players.slice(players.length / 2)),
             sortedPlayers = new Array(players.length)
         let
             lIdx = 0,
@@ -37,23 +36,5 @@ export class HighestWinRateMatchmaker implements Matchmaker {
         }
 
         return sortedPlayers
-    }
-
-    do(players: Player[]): Match[] {
-        if(players.length % 2 !== 0) {
-            throw new Error("Couldn't matchmake with odd number of player batch")
-        }
-
-        const candidates = this.sort(players)
-        const matches = new Array(players.length / 2)
-        for(let idx = 0; idx < players.length; idx += 2) {
-            matches[idx / 2] = Match.create({
-                player1: candidates[idx],
-                player2: candidates[idx + 1],
-                start: new Date()
-            })
-        }
-
-        return matches
     }
 }
