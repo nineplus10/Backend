@@ -1,45 +1,87 @@
-import e from "express"
-import express, {Response } from "express";
-import cors from "cors"
+import express, { Response } from "express";
+import { AuthController } from "account/controllers/authController";
+import { PrismaPlayer } from "account/repositories/prisma/prismaPlayer";
+import { AuthService } from "account/services/auth";
+import { Bcrypt } from "_lib/CryptoHandler/bcrypt";
+import { Jwt } from "_lib/TokenHandler/jwt";
+import { BearerParser } from "_lib/TokenHandler/Parser/bearer";
+import { ProfileService } from "account/services/profile";
+import { ProfileController } from "account/controllers/profileController";
+import { AuthChecker } from "account/_lib/Middlewares/AuthChecker";
+import { ValkeySession } from "account/repositories/valkey/valkeySession";
 import { Valkey } from "_lib/Persistence/Valkey";
+import { accountEnv } from "account/env";
+import { RefreshTokenChecker } from "account/_lib/Middlewares/RefreshTokenChecker";
+import { ApiTokenChecker } from "account/_lib/Middlewares/ApiTokenChecker";
 import { Logger } from "account/_lib/Middlewares/Logger";
 import { ErrorHandler } from "account/_lib/Middlewares/ErrorHandler";
-import { AccountRouterV1 } from "./routes";
-import { accountEnv } from "./env";
+import e from "express";
+import cors from "cors";
+import { ProfileRouter } from "./routes/profile";
+import { AuthRouter } from "./routes/auth";
 
 export class AccountModule {
-    _app: e.Express
+    static start(port: number) {
+        const 
+            upAt = Date.now(),
+            vkConn = new Valkey(accountEnv.CACHE_URL),
+            loggerMiddleware = new Logger(),
+            errorHandler = new ErrorHandler(),
+            tokenParser = new BearerParser(),
+            accessTokenHandler = new Jwt( accountEnv.ACCESS_TOKEN_SECRET,
+                                    accountEnv.ACCESS_TOKEN_LIFETIME,
+                                    tokenParser),
+            refreshTokenHandler = new Jwt( accountEnv.REFRESH_TOKEN_SECRET,
+                                        accountEnv.REFRESH_TOKEN_LIFETIME,
+                                        tokenParser),
+            authValidator = new AuthChecker(accessTokenHandler),
+            refreshTokenChecker = new RefreshTokenChecker(refreshTokenHandler),
+            apiTokenChecker = new ApiTokenChecker(refreshTokenHandler)
 
-    constructor() {
-        const upAt = Date.now()
-        const vkConn = new Valkey(accountEnv.CACHE_URL)
-        const loggerMiddleware = new Logger()
-        const errorHandler = new ErrorHandler()
+        const playerRepo = new PrismaPlayer()
+        const sessionCache = new ValkeySession(vkConn.conn)
 
-        const accountRouter = new AccountRouterV1(vkConn)
+        const 
+            profileService = new ProfileService(playerRepo),
+            authService = new AuthService(
+                                playerRepo, 
+                                sessionCache,
+                                new Bcrypt(), 
+                                accessTokenHandler, 
+                                refreshTokenHandler)
+        const 
+            authController = new AuthController(authService),
+            profileController = new ProfileController(profileService)
 
-        this._app = express()
-        this._app.use(loggerMiddleware.handle.bind(loggerMiddleware))
-        this._app.use(cors({
-            origin: ["http://localhost:8877"],// TODO: Consider moving it to .env, config, or something
-            optionsSuccessStatus: 200 // Legacy support: https://expressjs.com/en/resources/middleware/cors.html#configuring-cors
-        }))
-        this._app.use(express.urlencoded({extended: false}))
+        const 
+            profileRouter = new ProfileRouter(profileController, authValidator),
+            authRouter = new AuthRouter(
+                            authController, 
+                            authValidator, 
+                            refreshTokenChecker, 
+                            apiTokenChecker)
 
-        this._app.use("/api/account/v1", accountRouter.router)
-        this._app.use("/health", (_, res: Response, __) => { 
-            res.status(200)
-                .send({ uptime: `${(Date.now() - upAt)/1000}s` })
-        })
-        this._app.use("/", (_, res: Response, __) => { res.status(404).send() })
-        this._app.use(errorHandler.handle.bind(errorHandler))
+        const appRouterV1 = e.Router()
+        appRouterV1
+            .use("/auth", authRouter.router)
+            .use("/profile", profileRouter.router)
 
+        express()
+            .use(loggerMiddleware.handle.bind(loggerMiddleware))
+            .use(cors({
+                origin: ["http://localhost:8877"],// TODO: Consider moving it to .env, config, or something
+                optionsSuccessStatus: 200 // Legacy support: https://expressjs.com/en/resources/middleware/cors.html#configuring-cors
+            }))
+            .use(express.urlencoded({extended: false}))
+            .use("/api/account/v1", appRouterV1)
+            .use("/health", (_, res: Response, __) => { 
+                res.status(200)
+                    .send({ uptime: `${(Date.now() - upAt)/1000}s` })
+            })
+            .use("/", (_, res: Response, __) => { res.status(404).send() })
+            .use(errorHandler.handle.bind(errorHandler))
+            .listen(port, () => {
+                console.log(`[Account] Up and running on ${port}`)
+            })
     }
-
-    listen(port: number): ReturnType<typeof this._app.listen> {
-        return this._app.listen(port, () => {
-            console.log(`[Account] Up and running on ${port}`)
-        })
-    }
-
 }
