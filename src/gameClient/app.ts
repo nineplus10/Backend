@@ -22,7 +22,7 @@ export class GameClientModule {
         const websocketCache = new ValkeyWebsocket(valkey.conn)
     
         const matchService = new MatchService(
-            matchCache, new HighestWinRateMatchmaker())
+            matchCache, websocketCache, new HighestWinRateMatchmaker())
 
         const matchController = new MatchController(matchService)
 
@@ -40,15 +40,15 @@ export class GameClientModule {
                 await matchService.leavePool(connectionOwner)
             })
         
-        // const matchmakeInterval = setInterval(async() => {
-        //     await matchController.matchmake(
-        //         (connectionId: string, payload: object) => {
-        //             app.sendMessageTo(
-        //                 <ReturnType<typeof randomUUID>> connectionId,
-        //                 payload)
-        //         }
-        //     )
-        // }, 3*1000)
+        const matchmakeInterval = setInterval(async() => {
+            await matchController.matchmake(
+                (connectionId: string, payload: object) => {
+                    app.sendMessageTo(
+                        <ReturnType<typeof randomUUID>> connectionId,
+                        payload)
+                }
+            )
+        }, 3*1000)
 
         return app.server.listen(listenPort, () => {
             console.log(`[GameClient] Up and running on ${listenPort}`)
