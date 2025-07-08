@@ -44,3 +44,4 @@ Check this [documentation](https://82kin4x1s8.apidog.io) for the reference on co
 
 Devblogs are available!
 - [0x01 — The Initiation](https://medium.com/@allenrasheed/9p10-establishing-the-foundation-daed994e6a9c)
+- [0x02 — Finally, A Worthy Opponent](https://medium.com/@allenrasheed/9p10-finally-a-worthy-opponent-a64eb3053726)
