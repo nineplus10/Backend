@@ -27,39 +27,36 @@ export class AccountModule {
             vkConn = new Valkey(accountEnv.CACHE_URL),
             loggerMiddleware = new Logger(),
             errorHandler = new ErrorHandler(),
-            tokenParser = new BearerParser(),
-            accessTokenHandler = new Jwt( accountEnv.ACCESS_TOKEN_SECRET,
-                                    accountEnv.ACCESS_TOKEN_LIFETIME,
-                                    tokenParser),
-            refreshTokenHandler = new Jwt( accountEnv.REFRESH_TOKEN_SECRET,
-                                        accountEnv.REFRESH_TOKEN_LIFETIME,
-                                        tokenParser),
-            authValidator = new AuthChecker(accessTokenHandler),
-            refreshTokenChecker = new RefreshTokenChecker(refreshTokenHandler),
-            apiTokenChecker = new ApiTokenChecker(refreshTokenHandler)
-
-        const playerRepo = new PrismaPlayer()
-        const sessionCache = new ValkeySession(vkConn.conn)
-
+            accessTokenHandler = 
+                new Jwt( 
+                    accountEnv.ACCESS_TOKEN_SECRET,
+                    accountEnv.ACCESS_TOKEN_LIFETIME,
+                    new BearerParser()),
+            refreshTokenHandler = 
+                new Jwt(
+                    accountEnv.REFRESH_TOKEN_SECRET,
+                    accountEnv.REFRESH_TOKEN_LIFETIME,
+                    new BearerParser)
         const 
-            profileService = new ProfileService(playerRepo),
-            authService = new AuthService(
-                                playerRepo, 
-                                sessionCache,
-                                new Bcrypt(), 
-                                accessTokenHandler, 
-                                refreshTokenHandler)
+            profileService = new ProfileService(new PrismaPlayer()),
+            authService = 
+                new AuthService(
+                    new PrismaPlayer(), 
+                    new ValkeySession(vkConn.conn),
+                    new Bcrypt(), 
+                    accessTokenHandler, 
+                    refreshTokenHandler)
         const 
-            authController = new AuthController(authService),
-            profileController = new ProfileController(profileService)
-
-        const 
-            profileRouter = new ProfileRouter(profileController, authValidator),
-            authRouter = new AuthRouter(
-                            authController, 
-                            authValidator, 
-                            refreshTokenChecker, 
-                            apiTokenChecker)
+            profileRouter = 
+                new ProfileRouter(
+                    new ProfileController(profileService), 
+                    new AuthChecker(accessTokenHandler)),
+            authRouter = 
+                new AuthRouter(
+                    new AuthController(authService), 
+                    new AuthChecker(accessTokenHandler), 
+                    new RefreshTokenChecker(refreshTokenHandler),
+                    new ApiTokenChecker(refreshTokenHandler))
 
         const appRouterV1 = e.Router()
         appRouterV1

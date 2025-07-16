@@ -13,19 +13,20 @@ export class AuthRouter {
         apiTokenChecker: ApiTokenChecker
     ) {
         this._router = express.Router()
-        this._router.post("/login", authController.login.bind(authController))
-        this._router.post("/register", authController.register.bind(authController))
+        this._router
+            .post("/login", authController.login.bind(authController))
+            .post("/register", authController.register.bind(authController))
 
-        this._router.post("/refresh", 
-            refreshTokenChecker.validate.bind(refreshTokenChecker),
-            authController.refresh.bind(authController))
-        this._router.post("/revoke", 
-            authValidator.validate.bind(authValidator),
-            authController.revoke.bind(authController))
-        this._router.post("/infer",
-            refreshTokenChecker.validate.bind(refreshTokenChecker),
-            apiTokenChecker.handle.bind(apiTokenChecker),
-            authController.infer.bind(authController))
+            .post("/refresh", 
+                refreshTokenChecker.validate.bind(refreshTokenChecker),
+                authController.refresh.bind(authController))
+            .post("/revoke", 
+                authValidator.validate.bind(authValidator),
+                authController.revoke.bind(authController))
+            .post("/infer",
+                refreshTokenChecker.validate.bind(refreshTokenChecker),
+                apiTokenChecker.handle.bind(apiTokenChecker),
+                authController.infer.bind(authController))
     }
 
     get router(): Router {return this._router}

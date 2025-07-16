@@ -15,34 +15,31 @@ import { Matchmaker } from "./domain/services/matchmaker"
 
 export class GameClientModule {
     static async start(listenPort: number): Promise<GameClientModule> {
-        const kafka = new Kafka( "test", gameEnv.BROKER_URL)
-        const valkey = new Valkey(gameEnv.CACHE_URL)
-        const accountApi = new AccountApi(
-            gameEnv.AUTH_REFRESH_URL, 
-            "THIS IS MY API KEY")
+        const 
+            kafka = new Kafka( "test", gameEnv.BROKER_URL),
+            valkey = new Valkey(gameEnv.CACHE_URL)
 
-        const matchCache = new ValkeyMatch(valkey.conn)
         const websocketCache = new ValkeyWebsocket(valkey.conn)
     
-        const matchService = new MatchService(
-            matchCache, 
-            websocketCache, 
-            new Matchmaker(new HighestWinRate()))
+        const matchService = 
+            new MatchService(
+                new ValkeyMatch(valkey.conn), 
+                websocketCache, 
+                new Matchmaker(new HighestWinRate()))
 
         const matchController = new MatchController(matchService)
 
         const matchRouter = new MatchRouter(matchController)
 
-        const router = new GameClientRouterV1(matchRouter)
-
-        const app = new WsApp(
-            router, 
-            accountApi,
-            websocketCache.save.bind(websocketCache),
-            async(connectionOwner: number) => {
-                await websocketCache.remove(connectionOwner)
-                await matchService.leavePool(connectionOwner)
-            })
+        const app = 
+            new WsApp(
+                new GameClientRouterV1(matchRouter), 
+                new AccountApi(gameEnv.AUTH_REFRESH_URL, "THIS IS MY API KEY"),
+                websocketCache.save.bind(websocketCache),
+                async(connectionOwner: number) => {
+                    await websocketCache.remove(connectionOwner)
+                    await matchService.leavePool(connectionOwner)
+                })
         
         const matchmakeInterval = setInterval(async() => {
             await matchController.matchmake(
