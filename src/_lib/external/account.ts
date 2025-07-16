@@ -1,4 +1,4 @@
-import { AppErr, AppError } from "_lib/errors/http/AppError"
+import { AppErr, AppError } from "_lib/error/application"
 import { ZodValidator } from "_lib/validation/zod"
 import { z } from "zod"
 

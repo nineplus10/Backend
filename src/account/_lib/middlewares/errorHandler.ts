@@ -1,41 +1,50 @@
 import { NextFunction, Request, Response } from "express"
-import { DomainError } from "_lib/errors/http/DomainError";
-import { AppErr, AppError } from "_lib/errors/http/AppError";
+import { AppErr, AppError } from "_lib/error/application";
+import { HttpErrorAdapter, HttpErrSpec } from "_lib/error/adapter/http";
+
+const ERR_ADAPTER = new HttpErrorAdapter()
 
 export class ErrorHandler {
     constructor() {}
 
-    public handle(err: Error, req: Request, res: Response, next: NextFunction) {
-        const isSelfDefinedError = (
-            err instanceof AppError
-            || err instanceof DomainError )
+    private logError(name: string, description: string) {
+        const msg  = `[Account] Err${name}: ${description}`
+        switch(name) {
+            case AppErr.Internal: console.error(msg); break
+            default: console.log(msg); break
+        }
+    }
 
-        const {statusCode, sysErrName, sysErrMsg, clientErrShortMsg} = 
-            isSelfDefinedError
-            ? err.errSpec
-            : { statusCode: 500,
-                sysErrName: AppErr.Internal,
-                sysErrMsg: "Something went wrong within server.",
-                clientErrShortMsg: "Sorry! An error came from inside our system. Please try again later." }
-
-        // For non-error throws (In case of it's just being used as a placeholder). 
-        // Please refrain doing so in the code, though. It causes the debugging harder.
+    handle(err: Error, req: Request, res: Response, next: NextFunction) {
+        // Transforms non-error throws to internal server error. Despite 
+        // being handled, please refrain from doing so
         if(!(err instanceof Error)) {
-            console.log(`${err}`)
+            const err2 = new AppError(AppErr.Internal, "Unidentified error happened")
+            this.handle(err2, req, res, next)
+            console.log(err)
+            return 
         }
 
-        // For non-self-defined Errors (for example, the ones that was raised from libraries)
-        let errDesc = err.message
-        console.log(`[${sysErrName}] ${sysErrMsg}`)
-        if(!(err instanceof AppError) && err.stack !== undefined) {
-            const errLog =`Msg: ${err.message}\nCause:${err.cause}\nStack\n:${err.stack}\n`
-            console.log(errLog)
-            errDesc = "Something went wrong on our end and we're working our best to fix it. Sorry for your inconvenience"
-        } 
+        const isCustomError = err instanceof AppError
+        let spec: HttpErrSpec
+        let clientMsg: string = err.message
+        if(isCustomError) {
+            spec = ERR_ADAPTER.getSpec(err)
+            clientMsg = spec.msg
+        } else {
+            spec = {
+                statusCode: 500,
+                errName: AppErr.Internal,
+                description: "Something went wrong within server.",
+                msg: `${err.message}\ncause:${err.cause}\nstack\n:${err.stack}\n`
+            }
+            clientMsg = "Something went wrong on our end and we're working our best to fix it. Sorry for your inconvenience"
+        }
 
-        res.status(statusCode).send({
-            message: clientErrShortMsg,
-            description: errDesc})
+        this.logError(spec.errName, spec.description)
+        res.status(spec.statusCode).send({
+            message: clientMsg,
+            description: err.message})
         return
     }
 }

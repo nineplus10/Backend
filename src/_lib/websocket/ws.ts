@@ -4,7 +4,7 @@ import { WebSocket, WebSocketServer } from "ws";
 import { Message, OnErrorFx, Response, ServeFx } from ".";
 import { z } from "zod";
 import { ZodValidator } from "_lib/validation/zod";
-import { AppErr, AppError } from "_lib/errors/http/AppError";
+import { AppErr, AppError } from "_lib/error/application";
 import { URL } from "url";
 import { AccountApi } from "_lib/external/account";
 import Stream from "stream";

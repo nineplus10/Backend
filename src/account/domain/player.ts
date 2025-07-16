@@ -1,4 +1,4 @@
-import { DomainErr, DomainError } from "_lib/errors/http/DomainError";
+import { AppErr, AppError } from "_lib/error/application";
 import { Entity } from "../../_lib/domain/entity";
 import { Stats } from "./entities/stats";
 import { Bio } from "./values/bio";
@@ -22,8 +22,8 @@ export class Player extends Entity<PlayerProps> {
     
     static create(props: PlayerProps, id?: number) {
         if(props.stats.playerId !== id)
-            throw new DomainError(
-                DomainErr.InvalidValue,
+            throw new AppError(
+                AppErr.BadValues,
                 `Stats data doesn't belong to this player`)
 
         return new Player(props, id)

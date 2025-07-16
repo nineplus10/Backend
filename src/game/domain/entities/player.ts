@@ -1,5 +1,5 @@
 import { Entity } from "_lib/domain/entity";
-import { DomainErr, DomainError } from "_lib/errors/http/DomainError";
+import { AppErr, AppError } from "_lib/error/application";
 import { ZodValidator } from "_lib/validation/zod";
 import { z } from "zod";
 
@@ -27,8 +27,8 @@ export class Player extends Entity<PlayerProps> {
             throw new Error(validator.getErrMessage(error))
 
         if(props.wins > props.gamePlayed)
-            throw new DomainError(
-                DomainErr.InvalidValue,
+            throw new AppError(
+                AppErr.BadValues,
                 "`wins` could not be larger than `gamePlayed`")
 
         return new Player(data, id)

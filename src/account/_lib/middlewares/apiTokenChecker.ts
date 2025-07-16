@@ -1,4 +1,4 @@
-import { AppErr, AppError } from "_lib/errors/http/AppError";
+import { AppErr, AppError } from "_lib/error/application";
 import { TokenHandler } from "_lib/tokens";
 import { NextFunction, Request, Response } from "express";
 

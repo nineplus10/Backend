@@ -3,7 +3,7 @@ import { Player } from "account/domain/player";
 import { AuthRateLimitService } from "account/domain/services/authRateLimitService";
 import { CredentialsService } from "account/domain/services/credentialsService";
 import { CryptoHandler } from "_lib/crypto";
-import { AppErr, AppError } from "_lib/errors/http/AppError";
+import { AppErr, AppError } from "_lib/error/application";
 import { TokenHandler } from "_lib/tokens";
 import { PlayerRepo, SessionCache } from "account/repositories/player";
 import { Session } from "account/domain/entities/session";

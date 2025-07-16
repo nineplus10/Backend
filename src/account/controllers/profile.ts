@@ -1,4 +1,4 @@
-import { AppErr, AppError } from "_lib/errors/http/AppError";
+import { AppErr, AppError } from "_lib/error/application";
 import { AuthenticatedRequest } from "account/_lib/middlewares/authChecker";
 import { ZodValidator } from "_lib/validation/zod";
 import { ProfileService } from "account/services/profile";

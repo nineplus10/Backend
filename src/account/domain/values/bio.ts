@@ -1,5 +1,5 @@
 import { Value } from "_lib/domain/value";
-import { DomainErr, DomainError } from "_lib/errors/http/DomainError";
+import { AppErr, AppError } from "_lib/error/application";
 import { ZodValidator } from "_lib/validation/zod";
 import { z } from "zod";
 
@@ -25,8 +25,8 @@ export class Bio extends Value<BioProps> {
                 >(CRITERION)
         const {data, error} = validator.validate(props)
         if(error)
-            throw new DomainError(
-                DomainErr.InvalidValue,
+            throw new AppError(
+                AppErr.BadValues,
                 validator.getErrMessage(error))
 
         return new Bio(data)
