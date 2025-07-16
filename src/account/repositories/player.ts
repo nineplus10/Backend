@@ -1,5 +1,5 @@
 import { Player } from "account/domain/player";
-import { Repository } from "../../_lib/Domain/Repository";
+import { Repository } from "../../_lib/domain/repository";
 import { AuthRecord } from "account/domain/entities/authRecord";
 import { Handle } from "account/domain/values/handle";
 import { Email } from "account/domain/values/email";

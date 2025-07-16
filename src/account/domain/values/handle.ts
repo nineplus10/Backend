@@ -1,6 +1,6 @@
-import { Value } from "_lib/Domain/Value";
-import { DomainErr, DomainError } from "_lib/Error/http/DomainError";
-import { ZodValidator } from "_lib/Validator/zod";
+import { Value } from "_lib/domain/value";
+import { DomainErr, DomainError } from "_lib/errors/http/DomainError";
+import { ZodValidator } from "_lib/validation/zod";
 import { z } from "zod";
 
 interface HandleProps {

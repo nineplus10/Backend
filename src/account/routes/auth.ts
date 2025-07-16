@@ -1,7 +1,7 @@
-import { ApiTokenChecker } from "account/_lib/Middlewares/ApiTokenChecker";
-import { AuthChecker } from "account/_lib/Middlewares/AuthChecker";
-import { RefreshTokenChecker } from "account/_lib/Middlewares/RefreshTokenChecker";
-import { AuthController } from "account/controllers/authController";
+import { ApiTokenChecker } from "account/_lib/middlewares/apiTokenChecker";
+import { AuthChecker } from "account/_lib/middlewares/authChecker";
+import { RefreshTokenChecker } from "account/_lib/middlewares/refreshTokenChecker";
+import { AuthController } from "account/controllers/auth";
 import express, { Router } from "express";
 
 export class AuthRouter {

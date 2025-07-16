@@ -1,5 +1,5 @@
-import { DomainErr, DomainError } from "_lib/Error/http/DomainError";
-import { Entity } from "../../_lib/Domain/Entity";
+import { DomainErr, DomainError } from "_lib/errors/http/DomainError";
+import { Entity } from "../../_lib/domain/entity";
 import { Stats } from "./entities/stats";
 import { Bio } from "./values/bio";
 import { Email } from "./values/email";

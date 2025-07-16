@@ -1,5 +1,5 @@
 import { accountEnv } from "account/env";
-import { Entity } from "../../../_lib/Domain/Entity";
+import { Entity } from "../../../_lib/domain/entity";
 
 interface AuthRecordProps {
     playerId: number,

@@ -1,4 +1,4 @@
-import { Entity } from "_lib/Domain/Entity";
+import { Entity } from "_lib/domain/entity";
 
 interface SessionProps {
     playerId: number
