@@ -58,3 +58,4 @@ export interface Message {
 }
 
 export type OnErrorFx = (err: Error) => void
+export type ServeFx = (msg: Message, res: Response, onError: OnErrorFx) => void

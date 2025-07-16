@@ -1,8 +1,7 @@
 import { randomUUID } from "crypto";
 import { createServer, IncomingMessage, Server } from "http";
 import { WebSocket, WebSocketServer } from "ws";
-import { WsRouter } from "gameClient/routes";
-import { Message, Response } from ".";
+import { Message, OnErrorFx, Response, ServeFx } from ".";
 import { z } from "zod";
 import { ZodValidator } from "_lib/Validator/zod";
 import { AppErr, AppError } from "_lib/Error/http/AppError";
@@ -10,6 +9,36 @@ import { URL } from "url";
 import { AccountApi } from "_lib/api/account";
 import Stream from "stream";
 
+export abstract class WsRouter {
+    abstract serve(msg: Message, res: Response, onError: OnErrorFx): void
+
+    /**
+     * Matches payload destination to routers using longest matching substring 
+     * strategy. Wildcards aren't supported.
+     * 
+     * @returns [router, matchingRouteLength]
+     */ 
+    protected _resolve(
+        destination: string,
+        routes: [string, ServeFx][]
+    ): [ServeFx | undefined, number] {
+        const match: [ServeFx | undefined, number] = [undefined, -1]
+        routes.forEach(r => {
+            const [route, serveFx] = r
+            const isBetterCandidate = destination.startsWith(route)
+                                    && route.length > match[1]
+            if(isBetterCandidate) {
+                match[0] = serveFx
+                match[1] = route.length
+            }
+        })
+
+        match[1]++ // Plus delimiter
+        return match
+    }
+}
+
+/**Websocket Response based on `ws` package */
 export class WsResponse implements Response {
     meta: Response["meta"];
 
@@ -36,6 +65,7 @@ export class WsResponse implements Response {
     }
 }
 
+/**Websocket message based on `ws` package */
 export class WsMessage implements Message {
     static VALID_MESSAGE = z.object({
         meta: z.object({
@@ -72,6 +102,17 @@ export class WsApp {
         }
     }
 
+    private statusCodeMsg(code: number): string {
+        switch(code) {
+            case 403: return "401 Unauthorized"
+            case 404: return "404 Not Found"
+            case 400: return "400 Bad Request"
+            case 500: return "500 Internal Server Error"
+            default:
+                throw new Error(`statusCodeMsg: status code ${code} is not supported yet`)
+        }
+    }
+
     /**
      * Rejects HTTP Upgrade request by sending HTTP response via raw connection 
      * then destroying the socket.
@@ -94,23 +135,20 @@ export class WsApp {
         reason: string,
     ) {
         console.log(`[Game] Reject \`${req.socket.remoteAddress}\`: ${errorName}`)
+
         const payload = JSON.stringify({
             message: errorName,
             description: reason 
         })
-
         socket.write(
-            `HTTP/1.1 ${statusCode} Bad Request\r\n
+            `HTTP/1.1 ${this.statusCodeMsg(statusCode)}\r\n
             Content-Type: application/json\r\n
             Content-Length: ${payload.length}\r\n
             \r\n
-            ${payload} `
-        )
+            ${payload} `)
         socket.destroy()
     }
-
      
-    // HTTP upgrade: https://github.com/websockets/ws?tab=readme-ov-file#multiple-servers-sharing-a-single-https-server
     constructor( 
         router: WsRouter,
         accountApi: AccountApi,
@@ -122,9 +160,12 @@ export class WsApp {
         this._srv = createServer()
 
         this._srv.on("upgrade", async(req, socket, head) => {
-            const parsedUrl = URL.parse(req.url!, `http://${req.headers.host}`)
-            const token = parsedUrl?.searchParams.get("token")
-            const userAgent = req.headers["user-agent"]
+            const 
+                parsedUrl = URL.parse(req.url!, `http://${req.headers.host}`) 
+                            ?? URL.parse(req.url!, `https://${req.headers.host}`),
+                token = parsedUrl?.searchParams.get("token"),
+                userAgent = req.headers["user-agent"]
+
             if(!token || !userAgent) {
                 this.rejectUpgrade(req, socket, 
                     400, "BAD_REQUEST", "Both token and user agent should be provided")
@@ -139,6 +180,7 @@ export class WsApp {
                 })
             if(!tokenPayload) return
 
+            // HTTP upgrade: https://github.com/websockets/ws?tab=readme-ov-file#multiple-servers-sharing-a-single-https-server
             this._wsSrv.handleUpgrade(req, socket, head, async(ws, req) => {
                 const connectionId = randomUUID()
                 this._connections[connectionId] = {
@@ -148,10 +190,8 @@ export class WsApp {
                 await saveConnection(tokenPayload.player.id, connectionId)
 
                 ws.on("error", console.error)
-                ws.on("close", async(code: number, reason) => {
-                    const connectionOwner = this._connections[connectionId].player
-                    await onDisconnect(connectionOwner)
-
+                ws.on("close", async(code, reason) => {
+                    await onDisconnect(this._connections[connectionId].player)
                     delete this._connections[connectionId]
                     ws.close(code, reason)
                 })
@@ -177,7 +217,7 @@ export class WsApp {
                         return
                     }
 
-                    router.serve(msg, res, (err: Error) => {
+                    router.serve(msg, res, err => {
                         res.status("ERR")
                             .reason(err.message)
                             .send()

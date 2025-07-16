@@ -1,11 +1,12 @@
-import { findRouting, WsRouter, WsServeFx } from ".";
 import { MatchController } from "gameClient/controller/match";
-import { Message, OnErrorFx, Response } from "_lib/Websocket";
+import { Message, OnErrorFx, Response, ServeFx } from "_lib/Websocket";
+import { WsRouter } from "_lib/Websocket/ws";
 
-export class MatchRouter implements WsRouter  {
-    private readonly _serveFx: [string, WsServeFx][]
+export class MatchRouter extends WsRouter  {
+    private readonly _serveFx: [string, ServeFx][]
 
-    constructor( matchController: MatchController) { 
+    constructor(matchController: MatchController) { 
+        super()
         this._serveFx = [
             ["join", matchController.joinPool.bind(matchController)],
             ["leave", matchController.leavePool.bind(matchController)]
@@ -13,7 +14,7 @@ export class MatchRouter implements WsRouter  {
     }
 
     serve(msg: Message, res: Response, onError: OnErrorFx): void {
-        const [serveFx, matchLength] = findRouting(msg.meta.destination, this._serveFx)
+        const [serveFx, matchLength] = this._resolve(msg.meta.destination, this._serveFx)
         if(!serveFx) {
             res.status("ERR")
                 .reason("Destination not found")
@@ -21,9 +22,7 @@ export class MatchRouter implements WsRouter  {
             return
         }
 
-        msg.meta.destination = 
-            (<string>msg.meta.destination)
-            .slice(matchLength)
+        msg.meta.destination = msg.meta.destination.slice(matchLength)
         serveFx(msg, res, onError)
     }
 }

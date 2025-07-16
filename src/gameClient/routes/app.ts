@@ -1,26 +1,26 @@
-import { findRouting, WsRouter, WsServeFx } from "."
-import { Message, Response, OnErrorFx } from "_lib/Websocket"
+import { Message, Response, OnErrorFx, ServeFx } from "_lib/Websocket"
 import { MatchRouter } from "./match"
+import { WsRouter } from "_lib/Websocket/ws"
 
-export class GameClientRouterV1 implements WsRouter {
-    readonly _serveFx: [string, WsServeFx][]
+export class GameClientRouterV1 extends WsRouter {
+    readonly _serveFx: [string, ServeFx][]
+
     constructor( matchRouter: MatchRouter) {
+        super()
         this._serveFx = [
             ["match", matchRouter.serve.bind(matchRouter)],
         ]
     }
 
     serve(msg: Message, res: Response, onError: OnErrorFx): void {
-        const [serveFx, matchLength] = findRouting(msg.meta.destination, this._serveFx)
+        const [serveFx, matchLength] = this._resolve(msg.meta.destination, this._serveFx)
         if(!serveFx) {
             res.status("ERR")
                 .reason("Destination not found")
                 .send()
             return
         }
-        msg.meta.destination = 
-            (<string>msg.meta.destination)
-            .slice(matchLength)
-        serveFx( msg, res, onError)
+        msg.meta.destination = msg.meta.destination.slice(matchLength)
+        serveFx(msg, res, onError)
     }
 }
