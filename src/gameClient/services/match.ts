@@ -62,7 +62,6 @@ export class MatchService {
         const connections = await this._websocketCache.find(...matchCandidates)
         const matchedPlayers: number[] = []
         for(let idx = 0; idx < connections.length / 2; idx++) {
-            console.log(JSON.stringify(matches[idx]))
             const connPlayer1 = connections[idx]
             const connPlayer2 = connections[idx + 1]
             if(!connPlayer1 || !connPlayer2) continue

@@ -17,7 +17,9 @@ export class GameClientModule {
     static async start(listenPort: number): Promise<GameClientModule> {
         const kafka = new Kafka( "test", gameEnv.BROKER_URL)
         const valkey = new Valkey(gameEnv.CACHE_URL)
-        const accountApi = new AccountApi("THIS IS MY API KEY")
+        const accountApi = new AccountApi(
+            gameEnv.AUTH_REFRESH_URL, 
+            "THIS IS MY API KEY")
 
         const matchCache = new ValkeyMatch(valkey.conn)
         const websocketCache = new ValkeyWebsocket(valkey.conn)
@@ -35,9 +37,8 @@ export class GameClientModule {
 
         const app = new WsApp(
             router, 
-            gameEnv.AUTH_REFRESH_URL, 
             accountApi,
-            websocketCache,
+            websocketCache.save.bind(websocketCache),
             async(connectionOwner: number) => {
                 await websocketCache.remove(connectionOwner)
                 await matchService.leavePool(connectionOwner)

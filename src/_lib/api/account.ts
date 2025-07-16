@@ -19,15 +19,15 @@ const
 
 export class AccountApi {
     constructor(
+        private readonly _authEndpoint: string,
         private readonly _apiKey: string
     ) { }
 
     async inferWithRefreshToken(
-        authEndpoint: string, 
         userAgent: string,
         token: string,
     ): Promise<z.infer<typeof CHECK_AUTH_OK_PAYLOAD>>  {
-        return await fetch(authEndpoint, {
+        return await fetch(this._authEndpoint, {
                 method: "POST",
                 headers: {
                     "User-Agent": userAgent,

@@ -9,7 +9,6 @@ import { AppErr, AppError } from "_lib/Error/http/AppError";
 import { URL } from "url";
 import { AccountApi } from "_lib/api/account";
 import Stream from "stream";
-import { WebsocketCache } from "gameClient/repository/websocket";
 
 export class WsResponse implements Response {
     meta: Response["meta"];
@@ -114,9 +113,8 @@ export class WsApp {
     // HTTP upgrade: https://github.com/websockets/ws?tab=readme-ov-file#multiple-servers-sharing-a-single-https-server
     constructor( 
         router: WsRouter,
-        authEndpoint: string,
         accountApi: AccountApi,
-        websocketCache: WebsocketCache,
+        saveConnection: (playedId: number, connectionId: string) => Promise<void>,
         onDisconnect: (connectionOwner: number) => Promise<void>
     ) {
         this._connections = {}
@@ -133,33 +131,13 @@ export class WsApp {
                 return
             }
 
-            let authOk = true
-            const tokenPayload = {
-                refreshToken: "", 
-                accessToken: "",
-                player: {
-                    id: -1, 
-                    wins: -1, 
-                    gamePlayed: -1 
-                }
-            }
-            await accountApi.inferWithRefreshToken(authEndpoint, userAgent, token)
-                .then(res => {
-                    tokenPayload.refreshToken = res.refreshToken,
-                    tokenPayload.accessToken = res.accessToken
-                    tokenPayload.player = {
-                        id: res.player.id,
-                        wins: res.player.wins,
-                        gamePlayed: res.player.gamePlayed
-                    }
-                })
+            const tokenPayload = await accountApi
+                .inferWithRefreshToken(userAgent, token)
                 .catch(err => {
-                    authOk = false
                     this.rejectUpgrade(req, socket, 
                         500, "INTERNAL_ERROR", err.message)
                 })
-
-            if(!authOk) return
+            if(!tokenPayload) return
 
             this._wsSrv.handleUpgrade(req, socket, head, async(ws, req) => {
                 const connectionId = randomUUID()
@@ -167,7 +145,7 @@ export class WsApp {
                     player: tokenPayload.player.id,
                     connection: ws
                 }
-                await websocketCache.save(tokenPayload.player.id, connectionId)
+                await saveConnection(tokenPayload.player.id, connectionId)
 
                 ws.on("error", console.error)
                 ws.on("close", async(code: number, reason) => {
