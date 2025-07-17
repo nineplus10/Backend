@@ -1,11 +1,11 @@
-import { MatchmakingController } from "game/controllers/matchmaking";
+import { MatchController } from "game/controllers/match";
 import { Message, OnErrorFx, Response, ServeFx } from "_lib/websocket";
 import { WsRouter } from "_lib/websocket/ws";
 
-export class MatchmakingRouter extends WsRouter  {
+export class MatchRouter extends WsRouter  {
     private readonly _serveFx: [string, ServeFx][]
 
-    constructor(matchController: MatchmakingController) { 
+    constructor(matchController: MatchController) { 
         super()
         this._serveFx = [
             ["join", matchController.joinPool.bind(matchController)],

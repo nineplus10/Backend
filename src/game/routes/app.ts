@@ -1,11 +1,11 @@
 import { Message, Response, OnErrorFx, ServeFx } from "_lib/websocket"
-import { MatchmakingRouter } from "./matchmaking"
+import { MatchRouter } from "./match"
 import { WsRouter } from "_lib/websocket/ws"
 
 export class GameClientRouterV1 extends WsRouter {
     readonly _serveFx: [string, ServeFx][]
 
-    constructor( matchRouter: MatchmakingRouter) {
+    constructor( matchRouter: MatchRouter) {
         super()
         this._serveFx = [
             ["match", matchRouter.serve.bind(matchRouter)],
