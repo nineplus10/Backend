@@ -92,7 +92,7 @@ export class WsMessage implements Message {
     }
 }
 
-export class WsApp {
+export class WsConnectionManager {
     private readonly _srv: Server
     private readonly _wsSrv: WebSocketServer
     private readonly _connections: {
@@ -189,14 +189,15 @@ export class WsApp {
                 }
                 await saveConnection(tokenPayload.player.id, connectionId)
 
+                const res = new WsResponse(ws.send.bind(ws))
+                res.send(tokenPayload)
+
                 ws.on("error", console.error)
                 ws.on("close", async(code, reason) => {
                     await onDisconnect(this._connections[connectionId].player)
                     delete this._connections[connectionId]
                     ws.close(code, reason)
                 })
-
-                const res = new WsResponse(ws.send.bind(ws))
                 ws.on("message", data => {
                     let msg: WsMessage;
                     try {
@@ -223,20 +224,21 @@ export class WsApp {
                             .send()
                     })
                 })
-
-                console.log(`[Game] Allow \`${req.socket.remoteAddress}\``)
-                res.send(tokenPayload)
             })
         })
     }
 
-    sendMessageTo(connectionId: ReturnType<typeof randomUUID>, payload: any): boolean {
+    sendTo(connectionId: ReturnType<typeof randomUUID>, payload: any): boolean {
         const connection = this._connections[connectionId].connection
         const res = new WsResponse(connection.send.bind(connection))
         res.send(payload)
         return true
     }
 
-    get websocket(): WsApp["_wsSrv"] {return this._wsSrv}
-    get server(): WsApp["_srv"] {return this._srv}
+    getConnection(id: ReturnType<typeof randomUUID>): typeof this._connections | undefined {
+        return this._connections[id]
+    }
+
+    get websocket(): WsConnectionManager["_wsSrv"] {return this._wsSrv}
+    get server(): WsConnectionManager["_srv"] {return this._srv}
 }

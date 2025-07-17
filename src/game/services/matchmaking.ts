@@ -5,7 +5,7 @@ import { Matchmaker } from "game/domain/services/matchmaker";
 
 const attemptSkipCap = 10
 
-export class MatchService {
+export class MatchmakingService {
     private _attemptSkipped: number
     constructor(
         private readonly _matchCache: MatchCache,
