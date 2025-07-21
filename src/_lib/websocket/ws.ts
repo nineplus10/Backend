@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import { createServer, IncomingMessage, Server } from "http";
 import { WebSocket, WebSocketServer } from "ws";
-import { Message, OnErrorFx, Response, ServeFx } from ".";
+import { Cache, Message, OnErrorFx, Response, ServeFx } from ".";
 import { z } from "zod";
 import { ZodValidator } from "_lib/validation/zod";
 import { AppErr, AppError } from "_lib/error/application";
@@ -97,7 +97,7 @@ export class WsConnectionManager {
     private readonly _srv: Server
     private readonly _wsSrv: WebSocketServer
     private readonly _connections: {
-        [k: ReturnType<typeof randomUUID>]: {
+        [k: string]: {
             player: number,
             connection: WebSocket
         }
@@ -106,7 +106,7 @@ export class WsConnectionManager {
     constructor( 
         router: WsRouter,
         accountApi: AccountApi,
-        saveConnection: (playedId: number, connectionId: string) => Promise<void>,
+        websocketCache: Cache,
         onDisconnect: (connectionOwner: number) => Promise<void>
     ) {
         this._connections = {}
@@ -131,14 +131,23 @@ export class WsConnectionManager {
                 .catch(err => this.rejectUpgrade(req, socket, err))
             if(!tokenPayload) return
 
+            const connName = (await websocketCache.find(tokenPayload.player.id)).pop()
+            if(connName && this._connections[connName]) {
+                this.rejectUpgrade(req, socket,
+                    new AppError(AppErr.Forbidden, "Can't create new connection as the previous one is still active")
+                )
+                return
+            }
+
+
             // HTTP upgrade: https://github.com/websockets/ws?tab=readme-ov-file#multiple-servers-sharing-a-single-https-server
-            this._wsSrv.handleUpgrade(req, socket, head, async(ws, req) => {
+            this._wsSrv.handleUpgrade(req, socket, head, async(ws, _) => {
                 const connectionId = randomUUID()
                 this._connections[connectionId] = {
                     player: tokenPayload.player.id,
                     connection: ws
                 }
-                await saveConnection(tokenPayload.player.id, connectionId)
+                await websocketCache.save(tokenPayload.player.id, connectionId)
 
                 const res = new WsResponse(ws.send.bind(ws))
                 res.send({
@@ -182,14 +191,14 @@ export class WsConnectionManager {
         })
     }
 
-    sendTo(connectionId: ReturnType<typeof randomUUID>, payload: any): boolean {
+    sendTo(connectionId: string, payload: any): boolean {
         const connection = this._connections[connectionId].connection
         const res = new WsResponse(connection.send.bind(connection))
         res.send(payload)
         return true
     }
 
-    getConnection(id: ReturnType<typeof randomUUID>): typeof this._connections | undefined {
+    getConnection(id: string): typeof this._connections[keyof typeof this._connections] | undefined {
         return this._connections[id]
     }
 
@@ -232,7 +241,7 @@ export class WsConnectionManager {
             message: spec.msg,
             description: message 
         })
-        console.log(`[Game] Reject \`${req.socket.remoteAddress}\`: ${spec.errName}`)
+        console.log(`[Game] Reject \`${req.socket.remoteAddress}\`: ${spec.errName} - ${message}`)
 
         socket.write(
             `HTTP/1.1 ${this.statusCodeMsg(spec.statusCode)}\r\n

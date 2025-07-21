@@ -35,7 +35,7 @@ export class GameClientModule {
             new WsConnectionManager(
                 new GameClientRouterV1(matchRouter), 
                 new AccountApi(gameEnv.AUTH_REFRESH_URL, "THIS IS MY API KEY"),
-                websocketCache.save.bind(websocketCache),
+                websocketCache,
                 async(connectionOwner: number) => {
                     await websocketCache.remove(connectionOwner)
                     await matchService.leavePool(connectionOwner)
