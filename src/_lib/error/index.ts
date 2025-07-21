@@ -6,6 +6,6 @@ export interface ErrSpec {
 }
 
 type AdaptableErrors = AppError
-export interface ErrorAdapter<T> {
-    adapt(err: AdaptableErrors): T;
+export interface ErrorAdapter<AdaptedSpec> {
+    adapt(err: AdaptableErrors): AdaptedSpec;
 }

@@ -29,7 +29,8 @@ export class ErrorHandler {
         let spec: HttpErrSpec
         let clientMsg: string = err.message
         if(isCustomError) {
-            spec = ERR_ADAPTER.getSpec(err)
+            const adaptedErr = ERR_ADAPTER.adapt(err)
+            spec = adaptedErr.spec
             clientMsg = spec.msg
         } else {
             spec = {

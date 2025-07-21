@@ -6,14 +6,17 @@ export interface HttpErrSpec extends ErrSpec {
     errName: string,
 }
 
-export class HttpErrorAdapter implements ErrorAdapter<object> {
-    adapt(e: AppError): object {
-        const spec = errorEntries[<AppErr>e.name]
-        return spec
-    }
+type Spec = {
+    spec: HttpErrSpec,
+    message: string
+}
 
-    getSpec(e: AppError): HttpErrSpec {
-        return errorEntries[<AppErr>e.name]
+export class HttpErrorAdapter implements ErrorAdapter<Spec> {
+    adapt(e: AppError): Spec {
+        return {
+            spec: errorEntries[<AppErr>e.name],
+            message: e.message,
+        }
     }
 }
 

@@ -8,6 +8,7 @@ import { AppErr, AppError } from "_lib/error/application";
 import { URL } from "url";
 import { AccountApi } from "_lib/external/account";
 import Stream from "stream";
+import { HttpErrorAdapter } from "_lib/error/adapter/http";
 
 export abstract class WsRouter {
     abstract serve(msg: Message, res: Response, onError: OnErrorFx): void
@@ -121,16 +122,13 @@ export class WsConnectionManager {
 
             if(!token || !userAgent) {
                 this.rejectUpgrade(req, socket, 
-                    400, "BAD_REQUEST", "Both token and user agent should be provided")
+                    new AppError(AppErr.BadRequest, "Missing `token` and `userAgent`"))
                 return
             }
 
             const tokenPayload = await accountApi
                 .inferWithRefreshToken(userAgent, token)
-                .catch(err => {
-                    this.rejectUpgrade(req, socket, 
-                        500, "INTERNAL_ERROR", err.message)
-                })
+                .catch(err => this.rejectUpgrade(req, socket, err))
             if(!tokenPayload) return
 
             // HTTP upgrade: https://github.com/websockets/ws?tab=readme-ov-file#multiple-servers-sharing-a-single-https-server
@@ -143,7 +141,10 @@ export class WsConnectionManager {
                 await saveConnection(tokenPayload.player.id, connectionId)
 
                 const res = new WsResponse(ws.send.bind(ws))
-                res.send(tokenPayload)
+                res.send({
+                    access: tokenPayload.accessToken,
+                    refresh: tokenPayload.refreshToken
+                })
 
                 ws.on("error", console.error)
                 ws.on("close", async(code, reason) => {
@@ -195,17 +196,6 @@ export class WsConnectionManager {
     get websocket(): WsConnectionManager["_wsSrv"] {return this._wsSrv}
     get server(): WsConnectionManager["_srv"] {return this._srv}
 
-    private statusCodeMsg(code: number): string {
-        switch(code) {
-            case 403: return "401 Unauthorized"
-            case 404: return "404 Not Found"
-            case 400: return "400 Bad Request"
-            case 500: return "500 Internal Server Error"
-            default:
-                throw new Error(`statusCodeMsg: status code ${code} is not supported yet`)
-        }
-    }
-
     /**
      * Rejects HTTP Upgrade request by sending HTTP response via raw connection 
      * then destroying the socket.
@@ -220,25 +210,45 @@ export class WsConnectionManager {
      * - https://stackoverflow.com/questions/62447895/node-js-express-send-raw-http-responses, 
      * - https://ably.com/blog/websocket-authentication
     */
-    private rejectUpgrade(
-        req: IncomingMessage,
-        socket: Stream.Duplex, 
-        statusCode: number, 
-        errorName: string,
-        reason: string,
-    ) {
-        console.log(`[Game] Reject \`${req.socket.remoteAddress}\`: ${errorName}`)
+    private rejectUpgrade( req: IncomingMessage, socket: Stream.Duplex, err: Error) {
+        if(!(err instanceof AppError)) {
+            console.log(err)
+            const payload = JSON.stringify({
+                message: "Unknown error",
+                description: "Please try again later" // TODO: add request id or soemthign for easier diagnosis
+            })
+            socket.write(
+                `HTTP/1.1 500 Internal Server Error\r\n
+                Content-Type: application/json\r\n
+                Content-Length: ${payload.length}\r\n
+                \r\n
+                ${payload} `)
+            return
+        }
 
+        const adapter = new HttpErrorAdapter()
+        const {spec, message} = adapter.adapt(err)
         const payload = JSON.stringify({
-            message: errorName,
-            description: reason 
+            message: spec.msg,
+            description: message 
         })
+        console.log(`[Game] Reject \`${req.socket.remoteAddress}\`: ${spec.errName}`)
+
         socket.write(
-            `HTTP/1.1 ${this.statusCodeMsg(statusCode)}\r\n
+            `HTTP/1.1 ${this.statusCodeMsg(spec.statusCode)}\r\n
             Content-Type: application/json\r\n
             Content-Length: ${payload.length}\r\n
             \r\n
             ${payload} `)
         socket.destroy()
+    }
+
+    private statusCodeMsg(code: number): string {
+        switch(code) {
+            case 401: return "401 Unauthorized"
+            case 404: return "404 Not Found"
+            case 400: return "400 Bad Request"
+            default: return "500 Internal Server Error"
+        }
     }
 }
