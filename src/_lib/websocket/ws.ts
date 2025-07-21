@@ -102,53 +102,6 @@ export class WsConnectionManager {
         }
     }
 
-    private statusCodeMsg(code: number): string {
-        switch(code) {
-            case 403: return "401 Unauthorized"
-            case 404: return "404 Not Found"
-            case 400: return "400 Bad Request"
-            case 500: return "500 Internal Server Error"
-            default:
-                throw new Error(`statusCodeMsg: status code ${code} is not supported yet`)
-        }
-    }
-
-    /**
-     * Rejects HTTP Upgrade request by sending HTTP response via raw connection 
-     * then destroying the socket.
-     * 
-     * @param req 
-     * @param socket 
-     * @param statusCode - The statusCode related to the rejection
-     * @param errorName - The name of the error related to the rejection
-     * @param reason - The reason of rejection
-     *
-     * @see 
-     * - https://stackoverflow.com/questions/62447895/node-js-express-send-raw-http-responses, 
-     * - https://ably.com/blog/websocket-authentication
-    */
-    private rejectUpgrade(
-        req: IncomingMessage,
-        socket: Stream.Duplex, 
-        statusCode: number, 
-        errorName: string,
-        reason: string,
-    ) {
-        console.log(`[Game] Reject \`${req.socket.remoteAddress}\`: ${errorName}`)
-
-        const payload = JSON.stringify({
-            message: errorName,
-            description: reason 
-        })
-        socket.write(
-            `HTTP/1.1 ${this.statusCodeMsg(statusCode)}\r\n
-            Content-Type: application/json\r\n
-            Content-Length: ${payload.length}\r\n
-            \r\n
-            ${payload} `)
-        socket.destroy()
-    }
-     
     constructor( 
         router: WsRouter,
         accountApi: AccountApi,
@@ -241,4 +194,51 @@ export class WsConnectionManager {
 
     get websocket(): WsConnectionManager["_wsSrv"] {return this._wsSrv}
     get server(): WsConnectionManager["_srv"] {return this._srv}
+
+    private statusCodeMsg(code: number): string {
+        switch(code) {
+            case 403: return "401 Unauthorized"
+            case 404: return "404 Not Found"
+            case 400: return "400 Bad Request"
+            case 500: return "500 Internal Server Error"
+            default:
+                throw new Error(`statusCodeMsg: status code ${code} is not supported yet`)
+        }
+    }
+
+    /**
+     * Rejects HTTP Upgrade request by sending HTTP response via raw connection 
+     * then destroying the socket.
+     * 
+     * @param req 
+     * @param socket 
+     * @param statusCode - The statusCode related to the rejection
+     * @param errorName - The name of the error related to the rejection
+     * @param reason - The reason of rejection
+     *
+     * @see 
+     * - https://stackoverflow.com/questions/62447895/node-js-express-send-raw-http-responses, 
+     * - https://ably.com/blog/websocket-authentication
+    */
+    private rejectUpgrade(
+        req: IncomingMessage,
+        socket: Stream.Duplex, 
+        statusCode: number, 
+        errorName: string,
+        reason: string,
+    ) {
+        console.log(`[Game] Reject \`${req.socket.remoteAddress}\`: ${errorName}`)
+
+        const payload = JSON.stringify({
+            message: errorName,
+            description: reason 
+        })
+        socket.write(
+            `HTTP/1.1 ${this.statusCodeMsg(statusCode)}\r\n
+            Content-Type: application/json\r\n
+            Content-Length: ${payload.length}\r\n
+            \r\n
+            ${payload} `)
+        socket.destroy()
+    }
 }

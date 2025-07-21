@@ -1,7 +1,7 @@
-import { WebsocketCache } from "../websocket";
+import { Cache } from "_lib/websocket";
 import valkey from "iovalkey";
 
-export class ValkeyWebsocket implements WebsocketCache {
+export class ValkeyWebsocket implements Cache {
     constructor(
         private readonly _conn: valkey
     ) {}

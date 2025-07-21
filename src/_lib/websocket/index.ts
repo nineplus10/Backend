@@ -59,3 +59,9 @@ export interface Message {
 
 export type OnErrorFx = (err: Error) => void
 export type ServeFx = (msg: Message, res: Response, onError: OnErrorFx) => void
+
+export interface Cache {
+    find(...playerId: number[]): Promise<(string | undefined)[]>
+    save(playerId: number, connectionId: string): Promise<void>
+    remove(playerId: number): Promise<void>
+}

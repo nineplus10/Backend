@@ -1,7 +1,7 @@
 import { Player } from "game/domain/entities/player";
 import { MatchCache } from "game/repositories/match";
-import { WebsocketCache } from "game/repositories/websocket";
 import { Matchmaker } from "game/domain/services/matchmaker";
+import { Cache } from "_lib/websocket";
 
 const attemptSkipCap = 10
 
@@ -9,7 +9,7 @@ export class MatchService {
     private _attemptSkipped: number
     constructor(
         private readonly _matchCache: MatchCache,
-        private readonly _websocketCache: WebsocketCache,
+        private readonly _websocketCache: Cache,
         private readonly _matchMaker: Matchmaker
     ) { 
         this._attemptSkipped = 0
