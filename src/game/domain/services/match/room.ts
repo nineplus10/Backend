@@ -1,6 +1,6 @@
 
 import { randomUUID } from "crypto";
-import { BoardManager } from "./board";
+import { Board } from "./board";
 
 type RoomId = string
 
@@ -8,7 +8,7 @@ type RoomId = string
 export class RoomManager {
     private readonly _rooms: { 
         [id: RoomId]:  {
-            board: BoardManager
+            board: Board
             currentActor: number,
             participants: {
                 player1: number,
@@ -25,7 +25,7 @@ export class RoomManager {
     init(player1: number, player2: number): RoomId {
         const roomId = randomUUID() // TODO: change latee
         this._rooms[roomId] = {
-            board: new BoardManager(),
+            board: new Board(),
             currentActor: Date.now() % 2,
             participants: {
                 player1: player1, player2: player2
