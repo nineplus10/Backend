@@ -28,7 +28,8 @@ export class RoomManager {
             board: new Board(),
             currentActor: Date.now() % 2,
             participants: {
-                player1: player1, player2: player2
+                player1: player1, 
+                player2: player2
             },
             others: new Set<string>()
         }
