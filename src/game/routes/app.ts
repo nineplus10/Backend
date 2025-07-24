@@ -8,7 +8,7 @@ export class GameClientRouterV1 extends WsRouter {
     constructor( matchRouter: MatchRouter) {
         super()
         this._serveFx = [
-            ["match", matchRouter.serve.bind(matchRouter)],
+            ["matchmaking", matchRouter.serve.bind(matchRouter)],
         ]
     }
 
