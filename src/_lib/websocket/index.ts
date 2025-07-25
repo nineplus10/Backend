@@ -57,6 +57,7 @@ export interface Message {
     }
 }
 
+export type OnConnectionCloseFx<Identifier> = (identifier: Identifier) => Promise<void>
 export type OnErrorFx = (err: Error) => void
 export type ServeFx = (msg: Message, res: Response, onError: OnErrorFx) => void
 

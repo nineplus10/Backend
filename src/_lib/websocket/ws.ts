@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import { createServer, IncomingMessage, Server } from "http";
 import { WebSocket, WebSocketServer } from "ws";
-import { Cache, Message, OnErrorFx, Response, ServeFx } from ".";
+import { Cache, Message, OnConnectionCloseFx, OnErrorFx, Response, ServeFx } from ".";
 import { z } from "zod";
 import { ZodValidator } from "_lib/validation/zod";
 import { AppErr, AppError } from "_lib/error/application";
@@ -9,6 +9,8 @@ import { URL } from "url";
 import { AccountApi } from "_lib/external/account";
 import Stream from "stream";
 import { HttpErrorAdapter } from "_lib/error/adapter/http";
+
+type OnCloseFx = OnConnectionCloseFx<number>
 
 export abstract class WsRouter {
     abstract serve(msg: Message, res: Response, onError: OnErrorFx): void
@@ -102,13 +104,19 @@ export class WsConnectionManager {
             connection: WebSocket
         }
     }
+    private readonly _subscribers: {
+        onMessage: ServeFx[],
+        onClose: OnCloseFx[]
+    }
 
     constructor( 
-        router: WsRouter,
         accountApi: AccountApi,
-        websocketCache: Cache,
-        onDisconnect: (connectionOwner: number) => Promise<void>
+        connectionCache: Cache,
     ) {
+        this._subscribers = {
+            onMessage: [],
+            onClose: []
+        }
         this._connections = {}
         this._wsSrv = new WebSocketServer({noServer: true })
         this._srv = createServer()
@@ -131,7 +139,7 @@ export class WsConnectionManager {
                 .catch(err => this.rejectUpgrade(req, socket, err))
             if(!tokenPayload) return
 
-            const connName = (await websocketCache.find(tokenPayload.player.id)).pop()
+            const connName = (await connectionCache.find(tokenPayload.player.id)).pop()
             if(connName && this._connections[connName]) {
                 this.rejectUpgrade(req, socket,
                     new AppError(AppErr.Forbidden, "Can't create new connection as the previous one is still active")
@@ -147,7 +155,7 @@ export class WsConnectionManager {
                     player: tokenPayload.player.id,
                     connection: ws
                 }
-                await websocketCache.save(tokenPayload.player.id, connectionId)
+                await connectionCache.save(tokenPayload.player.id, connectionId)
 
                 const res = new WsResponse(ws.send.bind(ws))
                 res.send({
@@ -157,7 +165,10 @@ export class WsConnectionManager {
 
                 ws.on("error", console.error)
                 ws.on("close", async(code, reason) => {
-                    await onDisconnect(this._connections[connectionId].player)
+                    await Promise.all(this._subscribers.onClose.map(fx => {
+                        fx(this._connections[connectionId].player)
+                    }))
+
                     delete this._connections[connectionId]
                     ws.close(code, reason)
                 })
@@ -181,11 +192,13 @@ export class WsConnectionManager {
                         return
                     }
 
-                    router.serve(msg, res, err => {
-                        res.status("ERR")
-                            .reason(err.message)
-                            .send()
-                    })
+                    this._subscribers.onMessage.forEach(fx => {
+                        fx(msg, res, (err) => {
+                            res.status("ERR")
+                                .reason(err.message)
+                                .send()
+                        }
+                    )})
                 })
             })
         })
@@ -198,8 +211,12 @@ export class WsConnectionManager {
         return true
     }
 
-    getConnection(id: string): typeof this._connections[keyof typeof this._connections] | undefined {
-        return this._connections[id]
+    subscribeOnMessage(fx: ServeFx) {
+        this._subscribers.onMessage.push(fx)
+    }
+
+    subscibeOnClose(fx: OnCloseFx) {
+        this._subscribers.onClose.push(fx)
     }
 
     get websocket(): WsConnectionManager["_wsSrv"] {return this._wsSrv}
