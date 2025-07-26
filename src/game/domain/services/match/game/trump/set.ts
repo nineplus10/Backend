@@ -1,8 +1,5 @@
-import { Board, Player } from "./board";
-
-export interface Trump {
-    apply(applier: Player, b: Board): void
-}
+import { Trump } from ".";
+import { Board, Player } from "../board";
 
 /** Sets the cap for current game to 17 */
 class GoFor17 implements Trump {

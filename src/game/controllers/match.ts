@@ -58,7 +58,12 @@ export class MatchController {
     async matchmake(
         onMatched: (connectionId: string, payload: object) => void
     ) {
-        await this._matchService.matchmake(onMatched)
+        await this._matchService.matchmake(
+            (conn1: string, conn2: string, roomName: string) => {
+                const payload = { roomName: roomName }
+                onMatched(conn1, payload)
+                onMatched(conn2, payload)
+            })
             .catch(err => {
                 console.log(err)
             })

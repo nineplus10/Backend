@@ -1,6 +1,6 @@
 import { CardSet } from "./card"
 import { Deck } from "./deck"
-import { Trump, TrumpSet } from "./trump"
+import { TrumpSet } from "./trump/set"
 
 export type Player = "1" | "2"
 
