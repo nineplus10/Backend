@@ -111,7 +111,7 @@ export class WsConnectionManager {
 
     constructor( 
         accountApi: AccountApi,
-        connectionCache: Cache,
+        private readonly _connectionCache: Cache,
     ) {
         this._subscribers = {
             onMessage: [],
@@ -139,7 +139,7 @@ export class WsConnectionManager {
                 .catch(err => this.rejectUpgrade(req, socket, err))
             if(!tokenPayload) return
 
-            const connName = (await connectionCache.find(tokenPayload.player.id)).pop()
+            const connName = (await _connectionCache.find(tokenPayload.player.id)).pop()
             if(connName && this._connections[connName]) {
                 this.rejectUpgrade(req, socket,
                     new AppError(AppErr.Forbidden, "Can't create new connection as the previous one is still active")
@@ -155,7 +155,7 @@ export class WsConnectionManager {
                     player: tokenPayload.player.id,
                     connection: ws
                 }
-                await connectionCache.save(tokenPayload.player.id, connectionId)
+                await _connectionCache.save(tokenPayload.player.id, connectionId)
 
                 const res = new WsResponse(ws.send.bind(ws))
                 res.send({
@@ -202,6 +202,11 @@ export class WsConnectionManager {
                 })
             })
         })
+    }
+
+    async lookUp(identifier: number): Promise<string | undefined> {
+        const connName = (await this._connectionCache.find(identifier)).pop()
+        return connName
     }
 
     sendTo(connectionId: string, payload: any): boolean {
