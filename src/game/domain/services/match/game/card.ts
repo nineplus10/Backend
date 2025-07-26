@@ -21,12 +21,13 @@ export class CardSet {
     constructor(
         private readonly deck: Deck
     ) {
-        const initCard = this.deck.draw()
-        if(!initCard)
-            throw new Error("No initial card was drawn during initialization")
+        const initFaceDown = this.deck.draw()
+        const initFaceUp = this.deck.draw()
+        if(!initFaceDown || !initFaceUp)
+            throw new Error("Initial deck size is not enough for initial draw")
 
-        this._faceDown = initCard
-        this._faceUp = []
+        this._faceDown = initFaceDown
+        this._faceUp = [initFaceUp]
     }
 
     sum(): number {

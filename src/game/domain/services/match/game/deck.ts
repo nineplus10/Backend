@@ -11,7 +11,7 @@ export class Deck {
      * @see comparison: https://bost.ocks.org/mike/shuffle/compare.html
      */
     private shuffle(deck: Card[]) {
-        for(let endIdx = deck.length; endIdx > 0; endIdx--) {
+        for(let endIdx = deck.length - 1; endIdx > 0; endIdx--) {
             const newIdx = Math.floor(Math.random() * endIdx)
             const endEle = deck[endIdx]
             deck[endIdx] = deck[newIdx]

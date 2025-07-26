@@ -11,10 +11,10 @@ import { MatchRouter } from "./routes/match"
 import { AccountApi } from "_lib/external/account"
 import { ValkeyWebsocket } from "./repositories/valkey/valkeyWebsocket"
 import { Matchmaker } from "./domain/services/matchmaker"
-// import { MatchManager } from "./domain/services/match/manager"
-// import { GameService } from "./services/game"
-// import { GameController } from "./controllers/game"
-// import { GameRouter } from "./routes/game"
+import { MatchManager } from "./domain/services/match/manager"
+import { GameService } from "./services/game"
+import { GameController } from "./controllers/game"
+import { GameRouter } from "./routes/game"
 
 export class GameClientModule {
     static async start(listenPort: number) {
@@ -26,26 +26,25 @@ export class GameClientModule {
             connectionManager = 
                 new WsConnectionManager(
                     new AccountApi(gameEnv.AUTH_REFRESH_URL, "THIS IS MY API KEY"),
-                    websocketCache)
-            // matchManager = new MatchManager((connectionName: string, payload: object) => {
-            //     connectionManager.sendTo(connectionName, payload)
-            // })
+                    websocketCache),
+            matchManager = new MatchManager(
+                connectionManager.lookUp.bind(connectionManager),
+                connectionManager.sendTo.bind(connectionManager))
 
-    
         const matchService = 
             new MatchService(
                 matchCache, 
                 websocketCache, 
-                new Matchmaker(new HighestWinRate()))
-        // const gameService = new GameService(matchManager)
+                new Matchmaker(new HighestWinRate()),
+                matchManager)
+        const gameService = new GameService(matchManager)
 
-        // const gameController = new GameController(gameService)
+        const gameController = new GameController(gameService)
         const matchController = new MatchController(matchService)
 
-        // const gameRouter = new GameRouter(gameController)
+        const gameRouter = new GameRouter(gameController)
         const matchRouter = new MatchRouter(matchController)
-
-        const appRouter = new GameClientRouterV1(matchRouter)
+        const appRouter = new GameClientRouterV1( matchRouter, gameRouter)
 
         // Set up callbacks, intervals, and stuff
         connectionManager.subscribeOnMessage(appRouter.serve.bind(appRouter))

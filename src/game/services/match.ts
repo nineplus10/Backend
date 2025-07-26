@@ -2,6 +2,7 @@ import { Player } from "game/domain/entities/player";
 import { MatchCache } from "game/repositories/match";
 import { Matchmaker } from "game/domain/services/matchmaker";
 import { Cache } from "_lib/websocket";
+import { MatchManager } from "game/domain/services/match/manager";
 
 const attemptSkipCap = 10
 
@@ -10,7 +11,8 @@ export class MatchService {
     constructor(
         private readonly _matchCache: MatchCache,
         private readonly _websocketCache: Cache,
-        private readonly _matchMaker: Matchmaker
+        private readonly _matchMaker: Matchmaker,
+        private readonly _matchManager: MatchManager
     ) { 
         this._attemptSkipped = 0
     }
@@ -28,7 +30,7 @@ export class MatchService {
     }
 
     async matchmake(
-        onMatched: (connectionId: string, payload: object) => void
+        onMatched: (conn1: string, conn2: string, roomName: string) => void
     ): Promise<void> {
         const 
             reducerCoef = 1 / (this._attemptSkipped + 1),
@@ -47,9 +49,6 @@ export class MatchService {
         } 
         this._attemptSkipped = 0
         
-        // TODO: embed match metadata (Perhaps a JWT token that contains
-        // the identifier of players that are competing in this match?)
-
         const endIdx = Math.floor(players.length / 2) * 2
         const matches = this._matchMaker.find(players.slice(0, endIdx))
         const matchCandidates: number[] = []
@@ -66,10 +65,10 @@ export class MatchService {
             const connPlayer2 = connections[idx + 1]
             if(!connPlayer1 || !connPlayer2) continue
 
-            onMatched(connPlayer1, {})
-            onMatched(connPlayer2, {})
-
             const {player1, player2} = matches[idx]
+            const roomId = this._matchManager.init(player1.id!, player2.id!)
+            onMatched(connPlayer1, connPlayer2, roomId)
+
             matchedPlayers.push(player1.id!, player2.id!)
         }
 
