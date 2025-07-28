@@ -79,19 +79,16 @@ export class MatchManager {
     // the complete picture of the board. Perhaps delegate the functionalities
     // to `Board` class instead
     private broadcastBoard(room: typeof this._rooms[RoomId]) {
-        const {player1: p1Conn, player2: p2Conn} = room.participants
-        const {cap, round, player1, player2} = room.board
-        const payload = {
-            cap: cap,
-            round: round,
-            player1: player1,
-            player2: player2
+        const {player1, player2} = room.participants
+        const viewP1 = room.board.view("1")
+        const viewP2 = room.board.view("2")
+
+        this.send(player1.connection, viewP1)
+        this.send(player2.connection, viewP2)
+        if(room.others.size > 0) {
+            const viewPublic = room.board.view("0")
+            room.others.forEach(o => this.send(o, viewPublic))
         }
-
-        this.send(p1Conn.connection, payload)
-        this.send(p2Conn.connection, payload)
-        room.others.forEach(o => this.send(o, payload))
-
     }
 
     private broadcast(room: typeof this._rooms[RoomId], payload: object) {

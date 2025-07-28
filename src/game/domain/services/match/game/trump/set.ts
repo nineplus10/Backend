@@ -1,60 +1,109 @@
 import { Trump } from ".";
-import { Board, Player } from "../board";
+import { Board, PlayerReference } from "../board";
 
-/** Sets the cap for current game to 17 */
 class GoFor17 implements Trump {
-    apply(_: Player, b: Board): void {
+    apply(_: PlayerReference, b: Board): void {
         b.setCap(17)
+    }
+
+    explain(): { name: string; description: string; } {
+        return {
+            name: "Go For 17",
+            description: "Sets the cap for current round to 17"
+        }       
     }
 }
 
-/** Sets the cap for current game to 24 */
 class GoFor24 implements Trump {
-    apply(_: Player, b: Board): void {
+    apply(_: PlayerReference, b: Board): void {
         b.setCap(24)
+    }
+
+    explain(): { name: string; description: string; } {
+        return {
+            name: "Go For 24",
+            description: "Sets the cap for current round to 24"
+        }
     }
 }
 
 /** Sets the cap for current game to 27 */
 class GoFor27 implements Trump {
-    apply(_: Player, b: Board): void {
+    apply(_: PlayerReference, b: Board): void {
         b.setCap(27)
+    }
+
+    explain(): { name: string; description: string; } {
+        return {
+            name: "Go For 27",
+            description: "Sets the cap for current round to 27"
+        }
     }
 }
 
 /** Reduces the bet for the `applier` by 1 */
 class Shield implements Trump {
-    apply(applier: Player, b: Board): void {
-        b.setBet(applier, -1)
+    apply(applier: PlayerReference, b: Board): void {
+        const target = (applier === "1")? b.player1: b.player2
+        target.setBet(-1)
+    }
+
+    explain(): { name: string; description: string; } {
+        return {
+            name: "Shield",
+            description: "Reduces your bet by 1"
+        }
     }
 }
 
 /** Reduces the bet for the `applier` by 2 */
 class ShieldPlus implements Trump {
-    apply(applier: Player, b: Board): void {
-        b.setBet(applier, -2)
+    apply(applier: PlayerReference, b: Board): void {
+        const target = (applier === "1")? b.player1: b.player2
+        target.setBet(-2)
+    }
+
+    explain(): { name: string; description: string; } {
+        return {
+            name: "Shield+",
+            description: "Reduces your bet by 2"
+        }
     }
 }
 
 /** Removes the last up-facing card drawn by opponent and returns it to deck */
 class Remove implements Trump {
-    apply(applier: Player, b: Board): void {
+    apply(applier: PlayerReference, b: Board): void {
         const target = (applier === "1")? b.player2: b.player1
         target.cards.discard()
+    }
+
+    explain(): { name: string; description: string; } {
+        return {
+            name: "Remove",
+            description: "Returns the last face-up card drawn by your opponent to the deck"
+        }
     }
 }
 
 /** Removes the last up-facing card drawn by `applier` and returns it to deck */
 class Return implements Trump {
-    apply(applier: Player, b: Board): void {
+    apply(applier: PlayerReference, b: Board): void {
         const target = (applier === "1")? b.player1: b.player2
         target.cards.discard()
+    }
+
+    explain(): { name: string; description: string; } {
+        return {
+            name: "Return",
+            description: "Return your last drawn face-up card to the deck"
+        }
     }
 }
 
 export class TrumpSet {
     static MAX_INHAND = 8;
-    static pool: Trump[] = [
+    static pool: Trump[] = [ // TODO: probability-based pool
         new GoFor17(),
         new GoFor24(),
         new GoFor27(),
@@ -73,6 +122,13 @@ export class TrumpSet {
         this.draw(1)
     }
 
+    view() {
+        return {
+            inHand: this._inHand.map(t => t.explain()),
+            onTable: this._onTable.map(t => t.explain())
+        }
+    }
+
     /** Draws trumps from hand. If `(currentTrumpCards + n) > MAX_INHAND_TRUMPS`,
      * draw until the player have `MAX_INHAND_TRUMPS` trumps instead.
      * 
@@ -80,12 +136,12 @@ export class TrumpSet {
      */
     draw(n: number) {
         const diff = this._inHand.length + n - TrumpSet.MAX_INHAND
-        const actualN = diff < 0? n: n - diff
+        const actualCardsToDraw = diff < 0? n: n - diff
 
-        new Array(actualN).map(_ => {
+        for(let idx = 0; idx < actualCardsToDraw; idx++) {
             const idx = Math.floor(Math.random() * TrumpSet.pool.length)
             this._inHand.push(TrumpSet.pool[idx])
-        })
+        }
     }
 
     /** Discards trump from hand. If `idx` is out of range, do nothing instead
@@ -130,13 +186,12 @@ export class TrumpSet {
         hand2[t2Idx] = temp
     }
 
-    /** Clear trump cards on Table */
-    clear() {
+    clearOnTable() {
         this._onTable = []
     }
 
     use(idx: number): Trump | undefined {
-        if(idx < 0 || idx > this.inHand.length)
+        if(idx < 0 || idx > this._inHand.length)
             return undefined
 
         const trump = this._inHand[idx]
@@ -144,8 +199,4 @@ export class TrumpSet {
         this._onTable.push(trump)
         return trump
     }
-
-    get inHand(): typeof this._inHand {return this._inHand}
-    get onTable(): typeof this._onTable {return this._onTable}
-
 }

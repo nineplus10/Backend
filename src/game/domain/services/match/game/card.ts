@@ -30,6 +30,13 @@ export class CardSet {
         this._faceUp = [initFaceUp]
     }
 
+    view(): any {
+        return {
+            faceDown: this._faceDown,
+            faceUp: this._faceUp
+        }
+    }
+
     sum(): number {
         return this._faceUp.reduce(
             (acc, c) => acc + c,
@@ -95,7 +102,4 @@ export class CardSet {
         cardsP1[c1Idx] = cardsP2[c2Idx]
         cardsP2[c2Idx] = temp
     }
-
-    get faceUp(): typeof this._faceUp {return this._faceUp}
-    get faceDown(): typeof this._faceDown {return this._faceDown}
 }
