@@ -42,26 +42,22 @@ export class Board {
 
     /** Ends current round and prepares the next round */
     advance() {
-        let loser: PlayerState | undefined;
+        let loser: PlayerState;
         const sumP1 = this._player1.cards.sum()
         const sumP2 = this._player2.cards.sum()
-        if(sumP1 > this._cap && sumP2 > this._cap) {
-            loser = (sumP1 > sumP2)? this._player2 : this._player1
-        } else if(sumP1 > this._cap) {
-            loser = this._player2
-        } else if(sumP2 > this._cap) {
-            loser = this._player1
-        } else {
-            loser = 
-                (sumP1 == sumP2) 
-                ? undefined
-                : (sumP1 > sumP2)
-                    ? this._player1 
-                    : this._player2
-        }
 
-        if(loser)
-            loser.lose()
+        if(sumP1 === sumP2) {
+            return
+        } else if(sumP1 > this._cap && sumP2 > this._cap) {
+            loser = (sumP1 > sumP2)? this._player1 : this._player2
+        } else if(sumP1 > this._cap) {
+            loser = this._player1
+        } else if(sumP2 > this._cap) {
+            loser = this._player2
+        } else {
+            loser = (sumP1 > sumP2)? this._player2 : this._player1
+        }
+        loser.lose()
 
         this._cap = 21
         this._round++
