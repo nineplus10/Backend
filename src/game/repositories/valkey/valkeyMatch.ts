@@ -1,9 +1,9 @@
 import { MatchCache } from "../match";
 import valkey from "iovalkey";
-import { Player } from "game/domain/entities/player";
+import { PlayerStats } from "game/domain/values/playerStats";
 
 type Payload  = {
-    id: number
+    playerId: number
     gamePlayed: number
     wins: number
 }
@@ -16,7 +16,7 @@ export class ValkeyMatch implements MatchCache {
     async getWaitingPlayers(
         limit: number, 
         order: "ASC" | "DSC" = "ASC"
-    ): Promise<Player[]> {
+    ): Promise<PlayerStats[]> {
         const key = ["queue", "player"].join(":")
         return await 
             ( order == "ASC" 
@@ -28,21 +28,22 @@ export class ValkeyMatch implements MatchCache {
             })
             .then(players => {
                 return players.map(p => {
-                    return Player.create({
+                    return PlayerStats.create({
+                        playerId: Number(p["playerId"]),
                         gamePlayed: Number(p["gamePlayed"]),
                         wins: Number(p["wins"])
-                    }, Number(p["id"]))
+                    })
                 })
             })
     }
 
-    async enqueue(p: Player): Promise<void> {
+    async enqueue(p: PlayerStats): Promise<void> {
         const key = ["queue", "player"].join(":")
-        const playerKey = [key, `${p.id!}`].join(":")
+        const playerKey = [key, `${p.playerId}`].join(":")
         const playerDataKey = [playerKey, "info"].join(":")
 
         const payload: Payload = {
-            id: p.id!,
+            playerId: p.playerId,
             gamePlayed: p.gamePlayed,
             wins: p.wins
         }

@@ -2,6 +2,7 @@
 import { randomUUID } from "crypto";
 import { AppErr, AppError } from "_lib/error/application";
 import { Game } from "./game";
+import { Match } from "game/domain/values/match";
 
 type RoomId = string
 type ConnectionStatus = "READY" | "ONHOLD"
@@ -18,6 +19,7 @@ enum TimeoutMsg {
 export class MatchManager {
     private readonly _rooms: { 
         [id: RoomId]:  {
+            match: Match,
             timer: NodeJS.Timeout,
             board: Game,
             currentActor: number,
@@ -44,9 +46,13 @@ export class MatchManager {
         this._rooms = {}
     }
 
-    init(player1: number, player2: number): RoomId {
+    init(match: Match): RoomId {
+        const player1 = match.player1.playerId
+        const player2 = match.player2.playerId
+
         const roomId = randomUUID()
         this._rooms[roomId] = {
+            match: match,
             timer: setTimeout(
                 () => {
                     this.broadcast(this._rooms[roomId], {msg: "Match aborted"})

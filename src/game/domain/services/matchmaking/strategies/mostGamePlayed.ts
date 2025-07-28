@@ -1,8 +1,8 @@
-import { Player } from "game/domain/entities/player";
+import { PlayerStats } from "game/domain/values/playerStats";
 import { MatchmakingStrategy } from ".";
 
 export class HighestGamePlayed implements MatchmakingStrategy {
-    match(players: Player[]): Player[] {
+    match(players: PlayerStats[]): PlayerStats[] {
         if(players.length == 1) {
             return players
         } else if(players.length == 2) {

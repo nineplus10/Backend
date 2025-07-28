@@ -1,13 +1,13 @@
-import { Player } from "game/domain/entities/player";
+import { PlayerStats } from "game/domain/values/playerStats";
 import { MatchmakingStrategy } from "./strategies";
-import { Match } from "game/domain/match";
+import { Match } from "game/domain/values/match";
 
 export class Matchmaker {
     constructor(
         private readonly matcher: MatchmakingStrategy
     ) {}
 
-    find(players: Player[]): Match[] {
+    find(players: PlayerStats[]): Match[] {
         if(players.length % 2 !== 0) {
             throw new Error( "Couldn't matchmake with odd number of player batch")
         }

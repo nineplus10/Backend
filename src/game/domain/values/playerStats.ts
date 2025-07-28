@@ -1,24 +1,26 @@
-import { Entity } from "_lib/domain/entity";
+import { Value } from "_lib/domain/value";
 import { AppErr, AppError } from "_lib/error/application";
 import { ZodValidator } from "_lib/validation/zod";
 import { z } from "zod";
 
-interface PlayerProps {
+interface PlayerStatsProps {
+    playerId: number,
     gamePlayed: number,
     wins: number
 }
 
 const VALID_PROPS = z.object({
+    playerId: z.number().nonnegative(),
     wins: z.number().nonnegative(),
     gamePlayed: z.number().nonnegative()
 })
 
-export class Player extends Entity<PlayerProps> {
-    private constructor(props: PlayerProps, id?: number) {
-        super(props, id)
+export class PlayerStats extends Value<PlayerStatsProps> {
+    private constructor(props: PlayerStatsProps) {
+        super(props)
     }
 
-    static create(props: PlayerProps, id?: number) {
+    static create(props: PlayerStatsProps) {
         const validator = new ZodValidator<
             z.infer<typeof VALID_PROPS>
                 >(VALID_PROPS)
@@ -31,9 +33,10 @@ export class Player extends Entity<PlayerProps> {
                 AppErr.BadValues,
                 "`wins` could not be larger than `gamePlayed`")
 
-        return new Player(data, id)
+        return new PlayerStats(data)
     }
 
-    get gamePlayed(): PlayerProps["gamePlayed"] {return this._props.gamePlayed}
-    get wins(): PlayerProps["wins"] {return this._props.wins}
+    get playerId(): PlayerStatsProps["playerId"] {return this._props.playerId}
+    get gamePlayed(): PlayerStatsProps["gamePlayed"] {return this._props.gamePlayed}
+    get wins(): PlayerStatsProps["wins"] {return this._props.wins}
 }

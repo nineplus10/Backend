@@ -1,7 +1,7 @@
-import { Player } from "game/domain/entities/player"
+import { PlayerStats } from "game/domain/values/playerStats"
 
 export interface MatchCache {
-    getWaitingPlayers(limit: number, order?: "ASC" | "DSC"): Promise<Player[]>
-    enqueue(player: Player): Promise<void>
+    getWaitingPlayers(limit: number, order?: "ASC" | "DSC"): Promise<PlayerStats[]>
+    enqueue(player: PlayerStats): Promise<void>
     dequeue(...playerId: number[]): Promise<void>
 }

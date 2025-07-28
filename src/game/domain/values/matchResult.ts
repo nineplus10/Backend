@@ -1,22 +1,22 @@
-import { Entity } from "_lib/domain/entity";
-import { Player } from "./player";
+import { PlayerStats } from "./playerStats";
+import { Value } from "_lib/domain/value";
 
 interface MatchResultProps {
-    winner: Player
+    winner: PlayerStats
     gameLog: string
     chatLog: string
     end: Date
 }
 
-export class MatchResult extends Entity<MatchResultProps> {
-    private constructor(props: MatchResultProps, id?: number) {
-        super(props, id)
+export class MatchResult extends Value<MatchResultProps> {
+    private constructor(props: MatchResultProps) {
+        super(props)
     }
 
-    static create(props: MatchResultProps, id?: number) {
+    static create(props: MatchResultProps) {
         // TODO: Add domain validation
 
-        return new MatchResult(props, id)
+        return new MatchResult(props)
     }
 
     get winner(): MatchResultProps["winner"] {return this._props.winner}

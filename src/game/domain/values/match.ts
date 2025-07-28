@@ -1,21 +1,21 @@
-import { Entity } from "_lib/domain/entity";
-import { Player } from "./entities/player";
-import { MatchResult } from "./entities/matchResult";
+import { PlayerStats } from "./playerStats";
+import { MatchResult } from "./matchResult";
+import { Value } from "_lib/domain/value";
 
 interface MatchProps {
-    player1: Player
-    player2: Player
+    player1: PlayerStats
+    player2: PlayerStats
     result?: MatchResult
 
     start: Date
 }
 
-export class Match extends Entity<MatchProps> {
-    private constructor(props: MatchProps, id?: number) {
-        super(props, id)
+export class Match extends Value<MatchProps> {
+    private constructor(props: MatchProps) {
+        super(props)
     }
 
-    static create(props: MatchProps, id?: number) {
+    static create(props: MatchProps) {
         if(props.player1 === props.player2)
             throw new Error("Player shouldn't fight against themselves")
 
@@ -23,9 +23,9 @@ export class Match extends Entity<MatchProps> {
             props.result
             && ![props.player1, props.player2].includes(props.result.winner)
         if(winnerNotFromMatch)
-            throw new Error("Player shouldn't fight against themselves")
+            throw new Error("Winner should be either one of the players of this match")
 
-        return new Match(props, id)
+        return new Match(props)
     }
 
     get player1(): MatchProps["player1"] {return this._props.player1}
