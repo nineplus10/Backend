@@ -1,12 +1,12 @@
 import { Player } from "game/domain/entities/player";
 import { MatchCache } from "game/repositories/match";
-import { Matchmaker } from "game/domain/services/matchmaker";
+import { Matchmaker } from "game/domain/services/matchmaking/matchmaker";
 import { Cache } from "_lib/websocket";
 import { MatchManager } from "game/domain/services/match/manager";
 
 const attemptSkipCap = 10
 
-export class MatchService {
+export class MatchmakingService {
     private _attemptSkipped: number
     constructor(
         private readonly _matchCache: MatchCache,

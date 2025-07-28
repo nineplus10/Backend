@@ -1,5 +1,5 @@
 import { Message, Response, OnErrorFx, ServeFx } from "_lib/websocket"
-import { MatchRouter } from "./match"
+import { MatchRouter } from "./matchmaking"
 import { WsRouter } from "_lib/websocket/ws"
 import { GameRouter } from "./game"
 

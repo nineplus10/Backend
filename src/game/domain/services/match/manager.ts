@@ -1,7 +1,7 @@
 
 import { randomUUID } from "crypto";
 import { AppErr, AppError } from "_lib/error/application";
-import { Board } from "./game/board";
+import { Game } from "./game";
 
 type RoomId = string
 type ConnectionStatus = "READY" | "ONHOLD"
@@ -19,7 +19,7 @@ export class MatchManager {
     private readonly _rooms: { 
         [id: RoomId]:  {
             timer: NodeJS.Timeout,
-            board: Board,
+            board: Game,
             currentActor: number,
             participants: {
                 player1: {
@@ -54,7 +54,7 @@ export class MatchManager {
                 },
                 INIT_TIMEOUT*1000
             ),
-            board: new Board(),
+            board: new Game(),
             currentActor: Date.now() % 2,
             participants: {
                 player1: {

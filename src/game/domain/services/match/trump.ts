@@ -1,4 +1,4 @@
-import { Board, PlayerReference } from "../board";
+import { Game, PlayerReference } from "./game";
 
 type TrumpInfo = {
     name: string,
@@ -6,6 +6,6 @@ type TrumpInfo = {
 }
 
 export interface Trump {
-    apply(applier: PlayerReference, b: Board): void
+    apply(applier: PlayerReference, b: Game): void
     explain(): TrumpInfo
 }

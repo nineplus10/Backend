@@ -1,6 +1,6 @@
 import { ZodValidator } from "_lib/validation/zod"
 import { Message, OnErrorFx, Response } from "_lib/websocket"
-import { MatchService } from "game/services/match"
+import { MatchmakingService } from "game/services/matchmaking"
 import { z } from "zod"
 
 const VALID_JOIN_POOL = z.object({
@@ -12,9 +12,9 @@ const VALID_LEAVE_POOL = z.object({
     playerId: z.coerce.number()
 })
 
-export class MatchController {
+export class MatchmakingController {
     constructor(
-        private readonly _matchService: MatchService,
+        private readonly _matchService: MatchmakingService,
     ) {}
 
     async joinPool(msg: Message, _: Response, onError: OnErrorFx) {

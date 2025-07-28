@@ -1,6 +1,6 @@
-import { CardSet } from "./card";
-import { Deck } from "./deck";
-import { TrumpSet } from "./trump/set";
+import { CardSet } from "./card.set";
+import { Deck } from "./card.deck";
+import { TrumpSet } from "./trump.set";
 
 export class PlayerState {
     private _cards: CardSet

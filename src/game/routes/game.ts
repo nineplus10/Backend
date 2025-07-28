@@ -5,10 +5,10 @@ import { GameController } from "game/controllers/game";
 export class GameRouter extends WsRouter {
     private readonly _serveFx: [string, ServeFx][]
 
-    constructor(gameController: GameController) { 
+    constructor(controller: GameController) { 
         super()
         this._serveFx = [
-            ["join", gameController.join.bind(gameController)],
+            ["join", controller.join.bind(controller)],
         ]
     }
 

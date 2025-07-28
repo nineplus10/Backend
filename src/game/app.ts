@@ -4,13 +4,13 @@ import { GameClientRouterV1 } from "./routes/app"
 import { gameEnv } from "./env"
 import { WsConnectionManager } from "../_lib/websocket/ws"
 import { ValkeyMatch } from "./repositories/valkey/valkeyMatch"
-import { HighestWinRate } from "./domain/services/matchmaker/strategies/highestWinRate"
-import { MatchService } from "./services/match"
-import { MatchController } from "./controllers/match"
-import { MatchRouter } from "./routes/match"
+import { HighestWinRate } from "./domain/services/matchmaking/strategies/highestWinRate"
+import { MatchmakingService } from "./services/matchmaking"
+import { MatchmakingController } from "./controllers/matchmaking"
+import { MatchRouter } from "./routes/matchmaking"
 import { AccountApi } from "_lib/external/account"
 import { ValkeyWebsocket } from "./repositories/valkey/valkeyWebsocket"
-import { Matchmaker } from "./domain/services/matchmaker"
+import { Matchmaker } from "./domain/services/matchmaking/matchmaker"
 import { MatchManager } from "./domain/services/match/manager"
 import { GameService } from "./services/game"
 import { GameController } from "./controllers/game"
@@ -32,7 +32,7 @@ export class GameClientModule {
                 connectionManager.sendTo.bind(connectionManager))
 
         const matchService = 
-            new MatchService(
+            new MatchmakingService(
                 matchCache, 
                 websocketCache, 
                 new Matchmaker(new HighestWinRate()),
@@ -40,7 +40,7 @@ export class GameClientModule {
         const gameService = new GameService(matchManager)
 
         const gameController = new GameController(gameService)
-        const matchController = new MatchController(matchService)
+        const matchController = new MatchmakingController(matchService)
 
         const gameRouter = new GameRouter(gameController)
         const matchRouter = new MatchRouter(matchController)

@@ -1,9 +1,9 @@
-import { Deck } from "./deck"
+import { Deck } from "./card.deck"
 import { PlayerState } from "./player"
 
 export type PlayerReference = "1" | "2"
 
-export class Board {
+export class Game {
     private _cap: number
     private _round: number
     private _deck: Deck
