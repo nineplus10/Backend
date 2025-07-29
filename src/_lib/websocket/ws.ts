@@ -209,8 +209,19 @@ export class WsConnectionManager {
         return connName
     }
 
+    /** Sends something to certain connection identified by its id. If it wasn't 
+     * found, do nothing instead.
+     * 
+     * @param connectionId - connection identifier
+     * @param payload - something to be sent
+     * @returns - whether the payload had successfuly being sent
+     */
     sendTo(connectionId: string, payload: any): boolean {
-        const connection = this._connections[connectionId].connection
+        const connectionEntry = this._connections[connectionId]
+        if(!connectionEntry)
+            return false
+
+        const connection = connectionEntry.connection
         const res = new WsResponse(connection.send.bind(connection))
         res.send(payload)
         return true
