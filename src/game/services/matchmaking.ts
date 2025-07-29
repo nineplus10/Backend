@@ -3,8 +3,11 @@ import { MatchCache } from "game/repositories/match";
 import { Matchmaker } from "game/domain/services/matchmaking/matchmaker";
 import { Cache } from "_lib/websocket";
 import { MatchManager } from "game/domain/services/match/manager";
+import { Match } from "game/domain/values/match";
+import { AppErr, AppError } from "_lib/error/application";
 
 const attemptSkipCap = 10
+const MAX_PLAYER_PER_BATCH = 1000
 
 export class MatchmakingService {
     private _attemptSkipped: number
@@ -18,6 +21,12 @@ export class MatchmakingService {
     }
 
     async joinPool(playerId: number, gamePlayed: number, wins: number): Promise<void> {
+        const ongoingMatch = await this._matchCache.getCurrentMatchOf(playerId)
+        if(ongoingMatch)
+            throw new AppError(
+                AppErr.Forbidden,
+                `You still have an on-going match`)
+
         const player = PlayerStats.create({
             playerId: playerId,
             gamePlayed: gamePlayed, 
@@ -34,22 +43,20 @@ export class MatchmakingService {
         onMatched: (conn1: string, conn2: string, roomName: string) => void
     ): Promise<void> {
         const 
-            reducerCoef = 1 / (this._attemptSkipped + 1),
-            N_MAX_PLAYER_PER_BATCH = 1000,
-            N_MINIMUM_PLAYER_PER_BATCH = 
+            MINIMUM_PLAYER_PER_BATCH = 
                 this._attemptSkipped == attemptSkipCap
                     ? 2 
-                    : Math.floor(50 * reducerCoef)
+                    : Math.floor(50 / (this._attemptSkipped + 1)) // base * reducerCoef
 
-        const players = await this._matchCache.getWaitingPlayers(N_MAX_PLAYER_PER_BATCH)
-        if(players.length < N_MINIMUM_PLAYER_PER_BATCH) {
+        const players = await this._matchCache.getWaitingPlayers(MAX_PLAYER_PER_BATCH)
+        if(players.length < MINIMUM_PLAYER_PER_BATCH) {
             if(this._attemptSkipped < attemptSkipCap)
                 this._attemptSkipped++
             return
         } 
         this._attemptSkipped = 0
         
-        const endIdx = Math.floor(players.length / 2) * 2
+        const endIdx = (players.length % 2 == 0)? players.length: players.length - 1
         const matches = this._matchMaker.find(players.slice(0, endIdx))
 
         const matchCandidates: number[] = []
@@ -59,6 +66,8 @@ export class MatchmakingService {
         // Disconnected player would not have their record stored on cache. A 
         // player that got matched with them should not be dequeued
         const matchedPlayers: number[] = []
+        const roomIds: string[] = []
+        const initiatedMatches: Match[] = []
         for(let idx = 0; idx < connections.length / 2; idx++) {
             const connPlayer1 = connections[idx]
             const connPlayer2 = connections[idx + 1]
@@ -66,10 +75,14 @@ export class MatchmakingService {
 
             const match = matches[idx]
             const roomId = this._matchManager.init(match)
-            onMatched(connPlayer1, connPlayer2, roomId)
+            roomIds.push(roomId)
+            initiatedMatches.push(match)
             matchedPlayers.push(match.player1.playerId, match.player2.playerId)
+
+            onMatched(connPlayer1, connPlayer2, roomId)
         }
 
+        await this._matchCache.saveOngoingMatch(roomIds, matches)
         await this.leavePool(...matchedPlayers)
     }
 }

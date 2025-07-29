@@ -1,6 +1,7 @@
 import { MatchCache } from "../match";
 import valkey from "iovalkey";
 import { PlayerStats } from "game/domain/values/playerStats";
+import { Match } from "game/domain/values/match";
 
 type Payload  = {
     playerId: number
@@ -73,5 +74,32 @@ export class ValkeyMatch implements MatchCache {
                 if(err)
                     console.error(err)
             })
+    }
+
+    async getCurrentMatchOf(playerId: number): Promise<string | undefined> {
+        const key = ["player", `${playerId}`, "match"].join(":")
+        const row = await this._conn.get(key)
+        return row ?? undefined
+    }
+
+    async saveOngoingMatch(identifiers: string[], matches: Match[]): Promise<void> {
+        const args: string[] = []
+        matches.forEach((m, idx) => {
+            const p1Key = ["player", m.player1.playerId, "match"].join(":")
+            const p2Key = ["player", m.player2.playerId, "match"].join(":")
+            args.push(p1Key, identifiers[idx])
+            args.push(p2Key, identifiers[idx])
+        })
+        await this._conn.mset(...args)
+    }
+
+    async deleteCompletedMatch(matches: Match[]): Promise<void> {
+        const args: string[] = []
+        matches.forEach(m => {
+            const p1Key = ["player", m.player1.playerId, "match"].join(":")
+            const p2Key = ["player", m.player2.playerId, "match"].join(":")
+            args.push(p1Key, p2Key)
+        })
+        await this._conn.del(...args)
     }
 }
