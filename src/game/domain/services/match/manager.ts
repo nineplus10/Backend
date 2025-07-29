@@ -106,24 +106,49 @@ export class MatchManager {
         })
     }
 
-    async checkIn(roomId: RoomId, player: number) {
+    checkOut(roomId: RoomId, player: number) {
         const room = this._rooms[roomId]
         if(!room)
-            throw new AppError( AppErr.NotFound, "Room not found")
+            return
 
         const {player1, player2} = room.participants
         if(player != player1.id && player != player2.id) {
-            throw new AppError( AppErr.Forbidden, "You're not the participant of this game")
+            // "Somebody had ..." kinda message
+            return
+        }
+        
+        const msg = `${player === player1.id? "Player 1" : "Player 2"} had disconnected`
+        this.broadcast(room, { msg: msg })
+    }
+
+    spectate() {
+
+    }
+
+    async checkIn(roomId: RoomId, player: number) {
+        const room = this._rooms[roomId]
+        if(!room)
+            throw new AppError(AppErr.NotFound, "Room not found")
+
+        const {player1, player2} = room.participants
+        if(player != player1.id && player != player2.id) {
+            throw new AppError(AppErr.Forbidden, "You're not the participant of this game")
         }
 
         const connection = await this.lookUpConnection(player)
         if(!connection)
-            throw new AppError(
-                AppErr.Internal, `Connection for player not found`)
+            throw new AppError(AppErr.Internal, `Connection for player not found`)
+
+        const msg = `${player === player1.id? "Player 1" : "Player 2"} had connected`
+        this.broadcast(room, {msg: msg})
 
         const incomingPlayer = player == player1.id? player1: player2
-        incomingPlayer.status = "READY"
         incomingPlayer.connection = connection
+        if(player1.status == "READY" && player2.status == "READY") {
+            this.send(connection, room.board.view((incomingPlayer.id === player1.id)? "1": "2"))
+            return
+        }
+        incomingPlayer.status = "READY"
 
         if(player1.status == "READY" && player2.status == "READY") {
             room.timer.close()

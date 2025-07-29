@@ -9,7 +9,7 @@ import { AppErr, AppError } from "_lib/error/application";
 const attemptSkipCap = 10
 const MAX_PLAYER_PER_BATCH = 1000
 
-export class MatchmakingService {
+export class MatchService {
     private _attemptSkipped: number
     constructor(
         private readonly _matchCache: MatchCache,
@@ -84,5 +84,15 @@ export class MatchmakingService {
 
         await this._matchCache.saveOngoingMatch(roomIds, matches)
         await this.leavePool(...matchedPlayers)
+    }
+
+    async joinRoom(playerId: number) {
+        const roomId = await this._matchCache.getCurrentMatchOf(playerId)
+        if(!roomId)
+            throw new AppError(
+                AppErr.Forbidden,
+                "You aren't participated in any active match")
+
+        await this._matchManager.checkIn(roomId, playerId)
     }
 }

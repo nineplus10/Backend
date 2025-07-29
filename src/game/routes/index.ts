@@ -1,14 +1,16 @@
-import { Message, OnErrorFx, Response, ServeFx } from "_lib/websocket";
-import { WsRouter } from "_lib/websocket/ws";
-import { GameController } from "game/controllers/game";
+import { Message, Response, OnErrorFx, ServeFx } from "_lib/websocket"
+import { MatchRouter } from "./match"
+import { WsRouter } from "_lib/websocket/ws"
 
-export class GameRouter extends WsRouter {
-    private readonly _serveFx: [string, ServeFx][]
+export class GameClientRouterV1 extends WsRouter {
+    readonly _serveFx: [string, ServeFx][]
 
-    constructor(controller: GameController) { 
+    constructor(
+        router: MatchRouter,
+    ) {
         super()
         this._serveFx = [
-            ["join", controller.join.bind(controller)],
+            ["match", router.serve.bind(router)],
         ]
     }
 
@@ -20,7 +22,6 @@ export class GameRouter extends WsRouter {
                 .send()
             return
         }
-
         msg.meta.destination = msg.meta.destination.slice(matchLength)
         serveFx(msg, res, onError)
     }

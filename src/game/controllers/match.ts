@@ -1,20 +1,25 @@
+import { AppErr, AppError } from "_lib/error/application"
 import { ZodValidator } from "_lib/validation/zod"
 import { Message, OnErrorFx, Response } from "_lib/websocket"
-import { MatchmakingService } from "game/services/matchmaking"
+import { MatchService } from "game/services/match"
 import { z } from "zod"
 
-const VALID_JOIN_POOL = z.object({
+const JOIN_POOL_MSG = z.object({
     playerId: z.coerce.number(),
     wins: z.coerce.number(),
     gamePlayed: z.coerce.number()
 })
-const VALID_LEAVE_POOL = z.object({
+const LEAVE_POOL_MSG = z.object({
     playerId: z.coerce.number()
+})
+
+const JOIN_MATCH_MSG = z.object({
+    playerId: z.coerce.number(),
 })
 
 export class MatchmakingController {
     constructor(
-        private readonly _matchService: MatchmakingService,
+        private readonly _matchService: MatchService,
     ) {}
 
     async joinPool(msg: Message, _: Response, onError: OnErrorFx) {
@@ -24,8 +29,8 @@ export class MatchmakingController {
             gamePlayed: msg.data.player.gamePlayed
         }
         const validator = new ZodValidator<
-            z.infer<typeof VALID_JOIN_POOL>
-                >(VALID_JOIN_POOL)
+            z.infer<typeof JOIN_POOL_MSG>
+                >(JOIN_POOL_MSG)
         const {data, error} = validator.validate(props)
         if(error) {
             onError(new Error(validator.getErrMessage(error)))
@@ -42,8 +47,8 @@ export class MatchmakingController {
             playerId: msg.data.player.id,
         }
         const validator = new ZodValidator<
-            z.infer<typeof VALID_LEAVE_POOL>
-                >(VALID_LEAVE_POOL)
+            z.infer<typeof LEAVE_POOL_MSG>
+                >(LEAVE_POOL_MSG)
         const {data, error} = validator.validate(props)
         if(error) {
             onError(new Error(validator.getErrMessage(error)))
@@ -67,5 +72,22 @@ export class MatchmakingController {
             .catch(err => {
                 console.log(err)
             })
+    }
+
+    async joinMatch(msg: Message, _: Response, onError: OnErrorFx) {
+        const props = {
+            playerId: msg.data.player.id,
+        }
+        const validator = new ZodValidator<
+            z.infer<typeof JOIN_MATCH_MSG>
+                >(JOIN_MATCH_MSG)
+        const {data, error} = validator.validate(props)
+        if(error)
+            onError(new AppError(
+                AppErr.BadRequest,
+                validator.getErrMessage(error)))
+            
+        await this._matchService.joinRoom(data.playerId)
+            .catch(err => onError(err))
     }
 }

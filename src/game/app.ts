@@ -1,20 +1,17 @@
 import { Valkey } from "_lib/persistence/Valkey"
 import { Kafka } from "../_lib/messageBroker/kafka"
-import { GameClientRouterV1 } from "./routes/app"
+import { GameClientRouterV1 } from "./routes"
 import { gameEnv } from "./env"
 import { WsConnectionManager } from "../_lib/websocket/ws"
 import { ValkeyMatch } from "./repositories/valkey/valkeyMatch"
 import { HighestWinRate } from "./domain/services/matchmaking/strategies/highestWinRate"
-import { MatchmakingService } from "./services/matchmaking"
-import { MatchmakingController } from "./controllers/matchmaking"
-import { MatchRouter } from "./routes/matchmaking"
+import { MatchService } from "./services/match"
+import { MatchmakingController } from "./controllers/match"
+import { MatchRouter } from "./routes/match"
 import { AccountApi } from "_lib/external/account"
 import { ValkeyWebsocket } from "./repositories/valkey/valkeyWebsocket"
 import { Matchmaker } from "./domain/services/matchmaking/matchmaker"
 import { MatchManager } from "./domain/services/match/manager"
-import { GameService } from "./services/game"
-import { GameController } from "./controllers/game"
-import { GameRouter } from "./routes/game"
 
 export class GameClientModule {
     static async start(listenPort: number) {
@@ -32,26 +29,27 @@ export class GameClientModule {
                 connectionManager.sendTo.bind(connectionManager))
 
         const matchService = 
-            new MatchmakingService(
+            new MatchService(
                 matchCache, 
                 websocketCache, 
                 new Matchmaker(new HighestWinRate()),
                 matchManager)
-        const gameService = new GameService(matchManager)
 
-        const gameController = new GameController(gameService)
         const matchController = new MatchmakingController(matchService)
 
-        const gameRouter = new GameRouter(gameController)
         const matchRouter = new MatchRouter(matchController)
-        const appRouter = new GameClientRouterV1( matchRouter, gameRouter)
+        const appRouter = new GameClientRouterV1( matchRouter)
 
-        // Set up callbacks, intervals, and stuff
+        // Set up observers, intervals, and stuff
         connectionManager.subscribeOnMessage(appRouter.serve.bind(appRouter))
         connectionManager.subscibeOnClose( 
             async(connectionOwner: number) => {
                 await websocketCache.remove(connectionOwner)
                 await matchCache.dequeue(connectionOwner)
+
+                const roomId = await matchCache.getCurrentMatchOf(connectionOwner)
+                if(roomId)
+                    matchManager.checkOut(roomId, connectionOwner)
             }
         )
 
