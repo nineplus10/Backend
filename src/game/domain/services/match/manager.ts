@@ -178,4 +178,13 @@ export class MatchManager {
     getRoomParticipants(roomId: RoomId) {
         return this._rooms[roomId].participants
     }
+
+    isPlayerInMatch(roomId: RoomId, player: number): boolean {
+        const room = this._rooms[roomId]
+        if(!room)
+            return false
+
+        const {player1, player2} = room.participants
+        return player === player1.id || player === player2.id
+    }
 }

@@ -22,7 +22,7 @@ export class MatchService {
 
     async joinPool(playerId: number, gamePlayed: number, wins: number): Promise<void> {
         const ongoingMatch = await this._matchCache.getCurrentMatchOf(playerId)
-        if(ongoingMatch)
+        if(ongoingMatch && this._matchManager.isPlayerInMatch(ongoingMatch, playerId))
             throw new AppError(
                 AppErr.Forbidden,
                 `You still have an on-going match`)
