@@ -1,8 +1,8 @@
-import { PlayerStats } from "game/domain/values/playerStats";
+import { Player } from "game/domain/values/player";
 import { MatchmakingStrategy } from ".";
 
 export class FirstComeFirstServe implements MatchmakingStrategy {
-    match(players: PlayerStats[]): PlayerStats[] {
+    match(players: Player[]): Player[] {
         return players;
     }
 }

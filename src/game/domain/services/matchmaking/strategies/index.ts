@@ -1,5 +1,5 @@
-import { PlayerStats } from "game/domain/values/playerStats";
+import { Player } from "game/domain/values/player";
 
 export interface MatchmakingStrategy {
-    match(players: PlayerStats[]): PlayerStats[]
+    match(players: Player[]): Player[]
 }

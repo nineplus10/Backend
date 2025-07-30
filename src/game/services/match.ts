@@ -1,4 +1,4 @@
-import { PlayerStats } from "game/domain/values/playerStats";
+import { Player } from "game/domain/values/player";
 import { MatchCache } from "game/repositories/match";
 import { Matchmaker } from "game/domain/services/matchmaking/matchmaker";
 import { Cache } from "_lib/websocket";
@@ -27,8 +27,8 @@ export class MatchService {
                 AppErr.Forbidden,
                 `You still have an on-going match`)
 
-        const player = PlayerStats.create({
-            playerId: playerId,
+        const player = Player.create({
+            id: playerId,
             gamePlayed: gamePlayed, 
             wins: wins
         })
@@ -60,7 +60,7 @@ export class MatchService {
         const matches = this._matchMaker.find(players.slice(0, endIdx))
 
         const matchCandidates: number[] = []
-        matches.forEach(m => matchCandidates.push(m.player1.playerId, m.player2.playerId))
+        matches.forEach(m => matchCandidates.push(m.player1.id, m.player2.id))
         const connections = await this._websocketCache.find(...matchCandidates)
 
         // Disconnected player would not have their record stored on cache. A 
@@ -77,7 +77,7 @@ export class MatchService {
             const roomId = this._matchManager.init(match)
             roomIds.push(roomId)
             initiatedMatches.push(match)
-            matchedPlayers.push(match.player1.playerId, match.player2.playerId)
+            matchedPlayers.push(match.player1.id, match.player2.id)
 
             onMatched(connPlayer1, connPlayer2, roomId)
         }

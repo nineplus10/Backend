@@ -1,10 +1,10 @@
 import { MatchCache } from "../match";
 import valkey from "iovalkey";
-import { PlayerStats } from "game/domain/values/playerStats";
+import { Player } from "game/domain/values/player";
 import { Match } from "game/domain/values/match";
 
 type Payload  = {
-    playerId: number
+    id: number
     gamePlayed: number
     wins: number
 }
@@ -17,7 +17,7 @@ export class ValkeyMatch implements MatchCache {
     async getWaitingPlayers(
         limit: number, 
         order: "ASC" | "DSC" = "ASC"
-    ): Promise<PlayerStats[]> {
+    ): Promise<Player[]> {
         const key = ["queue", "player"].join(":")
         return await 
             ( order == "ASC" 
@@ -29,8 +29,8 @@ export class ValkeyMatch implements MatchCache {
             })
             .then(players => {
                 return players.map(p => {
-                    return PlayerStats.create({
-                        playerId: Number(p["playerId"]),
+                    return Player.create({
+                        id: Number(p["playerId"]),
                         gamePlayed: Number(p["gamePlayed"]),
                         wins: Number(p["wins"])
                     })
@@ -38,13 +38,13 @@ export class ValkeyMatch implements MatchCache {
             })
     }
 
-    async enqueue(p: PlayerStats): Promise<void> {
+    async enqueue(p: Player): Promise<void> {
         const key = ["queue", "player"].join(":")
-        const playerKey = [key, `${p.playerId}`].join(":")
+        const playerKey = [key, `${p.id}`].join(":")
         const playerDataKey = [playerKey, "info"].join(":")
 
         const payload: Payload = {
-            playerId: p.playerId,
+            id: p.id,
             gamePlayed: p.gamePlayed,
             wins: p.wins
         }
@@ -85,8 +85,8 @@ export class ValkeyMatch implements MatchCache {
     async saveOngoingMatch(identifiers: string[], matches: Match[]): Promise<void> {
         const args: string[] = []
         matches.forEach((m, idx) => {
-            const p1Key = ["player", m.player1.playerId, "match"].join(":")
-            const p2Key = ["player", m.player2.playerId, "match"].join(":")
+            const p1Key = ["player", m.player1.id, "match"].join(":")
+            const p2Key = ["player", m.player2.id, "match"].join(":")
             args.push(p1Key, identifiers[idx])
             args.push(p2Key, identifiers[idx])
         })
@@ -96,8 +96,8 @@ export class ValkeyMatch implements MatchCache {
     async deleteCompletedMatch(matches: Match[]): Promise<void> {
         const args: string[] = []
         matches.forEach(m => {
-            const p1Key = ["player", m.player1.playerId, "match"].join(":")
-            const p2Key = ["player", m.player2.playerId, "match"].join(":")
+            const p1Key = ["player", m.player1.id, "match"].join(":")
+            const p2Key = ["player", m.player2.id, "match"].join(":")
             args.push(p1Key, p2Key)
         })
         await this._conn.del(...args)

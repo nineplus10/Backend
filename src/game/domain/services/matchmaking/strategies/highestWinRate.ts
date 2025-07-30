@@ -1,8 +1,8 @@
-import { PlayerStats } from "game/domain/values/playerStats";
+import { Player } from "game/domain/values/player";
 import { MatchmakingStrategy } from ".";
 
 export class HighestWinRate implements MatchmakingStrategy {
-    match(players: PlayerStats[]): PlayerStats[] {
+    match(players: Player[]): Player[] {
         if(players.length == 1) {
             return players
         } else if(players.length == 2) {

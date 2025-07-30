@@ -6,6 +6,7 @@ import { z } from "zod"
 
 const JOIN_POOL_MSG = z.object({
     playerId: z.coerce.number(),
+    handle: z.string(),
     wins: z.coerce.number(),
     gamePlayed: z.coerce.number()
 })
@@ -26,6 +27,7 @@ export class MatchmakingController {
     async joinPool(msg: Message, _: Response, onError: OnErrorFx) {
         const props = {
             playerId: msg.data.player.id,
+            handle: msg.data.player.username,
             wins: msg.data.player.wins,
             gamePlayed: msg.data.player.gamePlayed
         }

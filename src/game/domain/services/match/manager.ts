@@ -23,14 +23,12 @@ export class MatchManager {
             timer: NodeJS.Timeout,
             board: Game,
             currentActor: number,
-            participants: {
-                player1: {
-                    id: number,
+            playerProps: {
+                p1: {
                     status: ConnectionStatus,
                     connection: string,
                 },
-                player2: {
-                    id: number,
+                p2: {
                     status: ConnectionStatus,
                     connection: string,
                 }
@@ -47,9 +45,6 @@ export class MatchManager {
     }
 
     init(match: Match): RoomId {
-        const player1 = match.player1.playerId
-        const player2 = match.player2.playerId
-
         const roomId = randomUUID()
         this._rooms[roomId] = {
             match: match,
@@ -62,14 +57,12 @@ export class MatchManager {
             ),
             board: new Game(),
             currentActor: Date.now() % 2,
-            participants: {
-                player1: {
-                    id: player1,
+            playerProps: {
+                p1: {
                     status: "ONHOLD",
                     connection: "",
                 }, 
-                player2: {
-                    id: player2,
+                p2: {
                     status: "ONHOLD",
                     connection: "",
                 }
@@ -80,17 +73,13 @@ export class MatchManager {
         return roomId
     }
 
-    // TODO: Send information based on the receiver. Players shouldn't get the 
-    // complete details of what the opposing player have while the spectators get
-    // the complete picture of the board. Perhaps delegate the functionalities
-    // to `Board` class instead
     private broadcastBoard(room: typeof this._rooms[RoomId]) {
-        const {player1, player2} = room.participants
+        const {p1, p2} = room.playerProps
         const viewP1 = room.board.view("1")
         const viewP2 = room.board.view("2")
 
-        this.send(player1.connection, viewP1)
-        this.send(player2.connection, viewP2)
+        this.send(p1.connection, viewP1)
+        this.send(p2.connection, viewP2)
         if(room.others.size > 0) {
             const viewPublic = room.board.view("0")
             room.others.forEach(o => this.send(o, viewPublic))
@@ -98,9 +87,9 @@ export class MatchManager {
     }
 
     private broadcast(room: typeof this._rooms[RoomId], payload: object) {
-        const {player1, player2} = room.participants
-        this.send(player1.connection, payload)
-        this.send(player2.connection, payload)
+        const {p1, p2} = room.playerProps
+        this.send(p1.connection, payload)
+        this.send(p2.connection, payload)
         room.others.forEach(o => {
             this.send(o, payload)
         })
@@ -111,7 +100,7 @@ export class MatchManager {
         if(!room)
             return
 
-        const {player1, player2} = room.participants
+        const {player1, player2} = room.match
         if(player != player1.id && player != player2.id) {
             // "Somebody had ..." kinda message
             return
@@ -130,7 +119,7 @@ export class MatchManager {
         if(!room)
             throw new AppError(AppErr.NotFound, "Room not found")
 
-        const {player1, player2} = room.participants
+        const {player1, player2} = room.match
         if(player != player1.id && player != player2.id) {
             throw new AppError(AppErr.Forbidden, "You're not the participant of this game")
         }
@@ -142,15 +131,18 @@ export class MatchManager {
         const msg = `${player === player1.id? "Player 1" : "Player 2"} had connected`
         this.broadcast(room, {msg: msg})
 
-        const incomingPlayer = player == player1.id? player1: player2
+        const {p1, p2} = room.playerProps
+        const incomingPlayer = player == player1.id
+                ? room.playerProps.p1
+                : room.playerProps.p2
         incomingPlayer.connection = connection
-        if(player1.status == "READY" && player2.status == "READY") {
-            this.send(connection, room.board.view((incomingPlayer.id === player1.id)? "1": "2"))
+        if(p1.status == "READY" && p2.status == "READY") {
+            this.send(connection, room.board.view((player === player1.id)? "1": "2"))
             return
         }
         incomingPlayer.status = "READY"
 
-        if(player1.status == "READY" && player2.status == "READY") {
+        if(p1.status == "READY" && p2.status == "READY") {
             room.timer.close()
             room.timer = setTimeout(() => {
                 console.log(TimeoutMsg.RoomBegin)
@@ -166,7 +158,7 @@ export class MatchManager {
         if(!room)
             return false
 
-        const {player1, player2} = room.participants
+        const {player1, player2} = room.match
         return player === player1.id || player === player2.id
     }
 }

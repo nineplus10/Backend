@@ -1,10 +1,10 @@
-import { PlayerStats } from "./playerStats";
+import { Player } from "./player";
 import { MatchResult } from "./matchResult";
 import { Value } from "_lib/domain/value";
 
 interface MatchProps {
-    player1: PlayerStats
-    player2: PlayerStats
+    player1: Player
+    player2: Player
     result?: MatchResult
 
     start: Date

@@ -1,8 +1,8 @@
-import { PlayerStats } from "./playerStats";
+import { Player } from "./player";
 import { Value } from "_lib/domain/value";
 
 interface MatchResultProps {
-    winner: PlayerStats
+    winner: Player
     gameLog: string
     chatLog: string
     end: Date
