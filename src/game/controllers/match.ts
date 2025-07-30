@@ -14,6 +14,7 @@ const LEAVE_POOL_MSG = z.object({
 })
 
 const JOIN_MATCH_MSG = z.object({
+    roomId: z.string().optional(),
     playerId: z.coerce.number(),
 })
 
@@ -64,8 +65,8 @@ export class MatchmakingController {
         onMatched: (connectionId: string, payload: object) => void
     ) {
         await this._matchService.matchmake(
-            (conn1: string, conn2: string, roomName: string) => {
-                const payload = { roomName: roomName }
+            (conn1: string, conn2: string, roomId: string) => {
+                const payload = { roomId: roomId }
                 onMatched(conn1, payload)
                 onMatched(conn2, payload)
             })
@@ -76,6 +77,7 @@ export class MatchmakingController {
 
     async joinMatch(msg: Message, _: Response, onError: OnErrorFx) {
         const props = {
+            roomId: msg.data.roomId, 
             playerId: msg.data.player.id,
         }
         const validator = new ZodValidator<
@@ -87,7 +89,7 @@ export class MatchmakingController {
                 AppErr.BadRequest,
                 validator.getErrMessage(error)))
             
-        await this._matchService.joinRoom(data.playerId)
+        await this._matchService.joinRoom(data.playerId, data.roomId)
             .catch(err => onError(err))
     }
 }

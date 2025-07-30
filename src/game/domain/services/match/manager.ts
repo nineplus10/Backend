@@ -106,7 +106,7 @@ export class MatchManager {
         })
     }
 
-    checkOut(roomId: RoomId, player: number) {
+    checkOut(player: number, roomId: RoomId) {
         const room = this._rooms[roomId]
         if(!room)
             return
@@ -125,7 +125,7 @@ export class MatchManager {
 
     }
 
-    async checkIn(roomId: RoomId, player: number) {
+    async checkIn(player: number, roomId: RoomId) {
         const room = this._rooms[roomId]
         if(!room)
             throw new AppError(AppErr.NotFound, "Room not found")
@@ -159,24 +159,6 @@ export class MatchManager {
             this.broadcastBoard(room)
             room.timer
         }
-    }
-
-    switch(roomId: RoomId) {
-        const room = this._rooms[roomId]
-        if(!room)
-            throw new AppError( AppErr.NotFound, "Room not found")
-    }
-
-    join(roomId: RoomId, connectionId: string) {
-        this._rooms[roomId].others.add(connectionId)
-    }
-
-    leave(roomId: RoomId, connectionId: string) {
-        this._rooms[roomId].others.delete(connectionId)
-    }
-
-    getRoomParticipants(roomId: RoomId) {
-        return this._rooms[roomId].participants
     }
 
     isPlayerInMatch(roomId: RoomId, player: number): boolean {

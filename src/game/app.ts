@@ -49,7 +49,7 @@ export class GameClientModule {
 
                 const roomId = await matchCache.getCurrentMatchOf(connectionOwner)
                 if(roomId)
-                    matchManager.checkOut(roomId, connectionOwner)
+                    matchManager.checkOut(connectionOwner, roomId)
             }
         )
 

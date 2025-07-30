@@ -40,7 +40,7 @@ export class MatchService {
     }
 
     async matchmake(
-        onMatched: (conn1: string, conn2: string, roomName: string) => void
+        onMatched: (conn1: string, conn2: string, roomId: string) => void
     ): Promise<void> {
         const 
             MINIMUM_PLAYER_PER_BATCH = 
@@ -82,17 +82,13 @@ export class MatchService {
             onMatched(connPlayer1, connPlayer2, roomId)
         }
 
-        await this._matchCache.saveOngoingMatch(roomIds, matches)
         await this.leavePool(...matchedPlayers)
+        await this._matchCache.saveOngoingMatch(roomIds, matches)
     }
 
-    async joinRoom(playerId: number) {
-        const roomId = await this._matchCache.getCurrentMatchOf(playerId)
-        if(!roomId)
-            throw new AppError(
-                AppErr.Forbidden,
-                "You aren't participated in any active match")
-
-        await this._matchManager.checkIn(roomId, playerId)
+    async joinRoom(playerId: number, roomId?: string) {
+        const actualRoomId = roomId ?? await this._matchCache.getCurrentMatchOf(playerId)
+        if(actualRoomId)
+            await this._matchManager.checkIn(playerId, actualRoomId)
     }
 }
