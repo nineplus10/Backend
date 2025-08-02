@@ -7,7 +7,4 @@ COPY ./game/package*.json /app/game/
 COPY ./lib/package*.json /app/lib/
 RUN npm ci
 
-COPY ./game /app/game
-COPY ./lib /app/lib
-
 CMD ["npm", "run", "dev", "-w", "game"]

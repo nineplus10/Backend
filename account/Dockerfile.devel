@@ -7,7 +7,4 @@ COPY ./account/package*.json /app/account/
 COPY ./lib/package*.json /app/lib/
 RUN npm ci
 
-COPY ./account /app/account
-COPY ./lib /app/lib
-
 ENTRYPOINT ["/app/account/docker-entrypoint.sh"]

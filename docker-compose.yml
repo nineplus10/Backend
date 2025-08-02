@@ -9,8 +9,8 @@ services:
       - 7788:8880
     working_dir: /app
     volumes:
-      - ./account/src/:/app/account/src/
-      - ./lib/src/:/app/lib/src/
+      - ./account:/app/account/
+      - ./lib:/app/lib/
     env_file:
       - path: "./account/.env"
         required: true 
@@ -57,8 +57,8 @@ services:
       - 7789:8881
     working_dir: /app
     volumes:
-      - ./game/src:/app/game/src
-      - ./lib/src:/app/lib/src
+      - ./game:/app/game/
+      - ./lib:/app/lib/
     env_file: 
       - path: "./game/.env"
         required: true 
