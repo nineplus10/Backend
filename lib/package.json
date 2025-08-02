@@ -1,0 +1,26 @@
+{
+  "name": "@nineplus10/lib",
+  "version": "1.0.0",
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/ws": "^8.18.1"
+  },
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@prisma/client": "^6.13.0",
+    "bcrypt-ts": "^7.1.0",
+    "iovalkey": "^0.3.3",
+    "jsonwebtoken": "^9.0.2",
+    "kafkajs": "^2.2.4",
+    "ws": "^8.18.3",
+    "zod": "^3.25.30"
+  }
+}

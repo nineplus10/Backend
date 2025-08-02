@@ -1,0 +1,14 @@
+{
+    "extends": "../tsconfig.json",
+    "compilerOptions": {
+        "emitDeclarationOnly": true,
+        "noEmit": false,
+
+        "rootDir": "./src",
+        "outDir": "./build",
+    },
+    "include": ["src/**/*"],
+    "exclude": [
+        "src/_generated"
+    ]
+}

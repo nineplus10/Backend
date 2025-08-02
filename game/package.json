@@ -1,0 +1,29 @@
+{
+  "name": "@nineplus10/game",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "devDependencies": {
+    "@types/node": "^22.15.21",
+    "@types/ws": "^8.18.1",
+    "nodemon": "^3.1.10",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@nineplus10/lib": "^1.0.0",
+    "dotenv": "^16.5.0",
+    "iovalkey": "^0.3.3",
+    "kafkajs": "^2.2.4",
+    "tsx": "^4.19.4",
+    "ws": "^8.18.2",
+    "zod": "^3.25.30"
+  },
+  "scripts": {
+    "dev": "nodemon",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}

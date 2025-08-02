@@ -1,5 +1,2 @@
-node_modules
-.env
-
-src/**/_generated/*
-!src/**/_generated/.gitkeep
+**/node_modules/
+**/_generated/

@@ -1,0 +1,20 @@
+{
+    "extends": "../tsconfig.json",
+    "references": [
+        {"path": "../lib"}
+    ],
+    "compilerOptions": { 
+        "rootDir": "./src",
+        "outDir": "./build",
+
+        "esModuleInterop": true,
+        "noEmit": true,
+    },
+    "include": [
+        "src/**/*",
+        "../lib/src/**/*"
+    ],
+    "exclude": [
+        "../lib/src/_generated"
+    ]
+}

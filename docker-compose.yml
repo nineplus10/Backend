@@ -1,12 +1,16 @@
 services:
-  server:
-    build: .
+  #############################################################################
+  ## ACCOUNT
+  #############################################################################
+  account:
+    build: 
+      dockerfile: ./account/Dockerfile
     ports: 
       - 7788:${ACC_APP_PORT}
-      - 7789:${MM_APP_PORT}
     working_dir: /app
     volumes:
-      - ./:/app
+      - ./account/src/:/app/account/src/
+      - ./lib/src/:/app/lib/src/
     environment:
       ACC_APP_ENV: ${ACC_APP_ENV:-DEVEL}
       ACC_APP_PORT: ${ACC_APP_PORT:-8000}
@@ -18,24 +22,13 @@ services:
       ACC_AUTH_FAIL_COOLDOWN: ${ACC_AUTH_FAIL_COOLDOWN:-10}
       ACC_DB_URL: ${ACC_DB_URL:-postgresql://postgres:dont_you_have_something_better_to_do@account-db:5432/mydb?schema=public}
       ACC_CACHE_URL: ${ACC_CACHE_URL:-redis://:dont_you_have_something_better_to_do@account-cache:6379/0}
-
-      MM_ACCOUNT_API_KEY: ${MM_ACCOUNT_API_KEY:-correctapikey}
-      MM_ACCOUNT_URL: ${MM_ACCOUNT_URL:-http://localhost:8000/}
-      MM_REFRESH_PATH: ${MM_REFRESH_PATH:-api/account/v1/auth/infer/}
-      MM_APP_PORT: ${MM_APP_PORT:-7789}
-      MM_CACHE_URL: ${MM_CACHE_URL:-redis://:dont_you_have_something_better_to_do_too@game-cache:6379/0}
     depends_on:
       account-db:
         condition: service_healthy
         restart: true
       account-cache:
         condition: service_healthy
-      game-cache:
-        condition: service_healthy
 
-  #############################################################################
-  ## ACCOUNT
-  #############################################################################
   account-db:
     image: postgres:17-alpine
     volumes: 
@@ -64,6 +57,25 @@ services:
   #############################################################################
   ## Game
   #############################################################################
+  game:
+    build:
+      dockerfile: ./game/Dockerfile
+    ports:
+      - 7789:${MM_APP_PORT}
+    working_dir: /app
+    volumes:
+      - ./game/src:/app/game/src
+      - ./lib/src:/app/lib/src
+    environment:
+      MM_ACCOUNT_API_KEY: ${MM_ACCOUNT_API_KEY:-correctapikey}
+      MM_ACCOUNT_URL: ${MM_ACCOUNT_URL:-http://account:8000/}
+      MM_REFRESH_PATH: ${MM_REFRESH_PATH:-api/account/v1/auth/infer/}
+      MM_APP_PORT: ${MM_APP_PORT:-7789}
+      MM_CACHE_URL: ${MM_CACHE_URL:-redis://:dont_you_have_something_better_to_do_too@game-cache:6379/0}
+    depends_on:
+      game-cache:
+        condition: service_healthy
+
   game-cache:
     image: valkey/valkey:8-alpine
     command: "valkey-server --save 60 1 --loglevel warning" # Fine-tune later
@@ -79,24 +91,25 @@ services:
   #############################################################################
   ## Message Broker
   #############################################################################
-  broker:
-    image: apache/kafka:3.8.1
-    ports:
-      - 19092:19092
-    environment:
-      KAFKA_NODE_ID: 1
-      KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_LISTENERS: INTERNAL://localhost:9092,EXTERNAL://broker:19092,controller://broker:9093
-      KAFKA_ADVERTISED_LISTENERS: INTERNAL://localhost:9092,EXTERNAL://broker:19092
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: controller:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      KAFKA_NUM_PARTITIONS: 3
+  # broker:
+  #   image: apache/kafka:3.8.1
+  #   ports:
+  #     - 19092:19092
+  #   environment:
+  #     KAFKA_NODE_ID: 1
+  #     KAFKA_PROCESS_ROLES: broker,controller
+  #     KAFKA_LISTENERS: INTERNAL://localhost:9092,EXTERNAL://broker:19092,controller://broker:9093
+  #     KAFKA_ADVERTISED_LISTENERS: INTERNAL://localhost:9092,EXTERNAL://broker:19092
+  #     KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+  #     KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: controller:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+  #     KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+  #     KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+  #     KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+  #     KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+  #     KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+  #     KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+  #     KAFKA_NUM_PARTITIONS: 3
+
 volumes:
   account-main-vol:
   account-cache-vol:
