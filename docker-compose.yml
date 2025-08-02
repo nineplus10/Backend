@@ -6,22 +6,14 @@ services:
     build: 
       dockerfile: ./account/Dockerfile
     ports: 
-      - 7788:${ACC_APP_PORT}
+      - 7788:8880
     working_dir: /app
     volumes:
       - ./account/src/:/app/account/src/
       - ./lib/src/:/app/lib/src/
-    environment:
-      ACC_APP_ENV: ${ACC_APP_ENV:-DEVEL}
-      ACC_APP_PORT: ${ACC_APP_PORT:-8000}
-      ACC_ACCESS_TOKEN_SECRET: ${ACC_ACCESS_TOKEN_SECRET:-you_wouldnt_guess_it}
-      ACC_ACCESS_TOKEN_LIFETIME: ${ACC_ACCESS_TOKEN_LIFETIME:-10}
-      ACC_REFRESH_TOKEN_SECRET: ${ACC_REFRESH_TOKEN_SECRET:-quit_it_its_no_use}
-      ACC_REFRESH_TOKEN_LIFETIME: ${ACC_REFRESH_TOKEN_LIFETIME:-10}
-      ACC_AUTH_MAX_FAIL: ${ACC_AUTH_MAX_FAIL:-3}
-      ACC_AUTH_FAIL_COOLDOWN: ${ACC_AUTH_FAIL_COOLDOWN:-10}
-      ACC_DB_URL: ${ACC_DB_URL:-postgresql://postgres:dont_you_have_something_better_to_do@account-db:5432/mydb?schema=public}
-      ACC_CACHE_URL: ${ACC_CACHE_URL:-redis://:dont_you_have_something_better_to_do@account-cache:6379/0}
+    env_file:
+      - path: "./account/.env"
+        required: true 
     depends_on:
       account-db:
         condition: service_healthy
@@ -33,8 +25,9 @@ services:
     image: postgres:17-alpine
     volumes: 
       - account-main-vol:/var/lib/postgresql/data
-    environment:
-      POSTGRES_PASSWORD: ${ACC_DB_PASS:-dont_you_have_something_better_to_do}
+    env_file:
+      - path: "./account/.env"
+        required: true 
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
       interval: 10s
@@ -61,17 +54,14 @@ services:
     build:
       dockerfile: ./game/Dockerfile
     ports:
-      - 7789:${MM_APP_PORT}
+      - 7789:8881
     working_dir: /app
     volumes:
       - ./game/src:/app/game/src
       - ./lib/src:/app/lib/src
-    environment:
-      MM_ACCOUNT_API_KEY: ${MM_ACCOUNT_API_KEY:-correctapikey}
-      MM_ACCOUNT_URL: ${MM_ACCOUNT_URL:-http://account:8000/}
-      MM_REFRESH_PATH: ${MM_REFRESH_PATH:-api/account/v1/auth/infer/}
-      MM_APP_PORT: ${MM_APP_PORT:-7789}
-      MM_CACHE_URL: ${MM_CACHE_URL:-redis://:dont_you_have_something_better_to_do_too@game-cache:6379/0}
+    env_file: 
+      - path: "./game/.env"
+        required: true 
     depends_on:
       game-cache:
         condition: service_healthy

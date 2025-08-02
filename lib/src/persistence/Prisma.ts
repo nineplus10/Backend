@@ -1,7 +1,8 @@
-import { Prisma } from "@prisma/client";
-import { PrismaClient } from "../_generated/prisma/index.ts";
+import { Prisma, PrismaClient } from "@prisma/client";
 
-export function PrismaWithTx<T>(txFx: (ctx: Prisma.TransactionClient) => Promise<T>) {
-    const P = new PrismaClient();
-    return P.$transaction(txFx)
+export function PrismaWithTx<T>(
+    client: PrismaClient,
+    txFx: (ctx: Prisma.TransactionClient) => Promise<T>) 
+{
+    return client.$transaction(txFx)
 }

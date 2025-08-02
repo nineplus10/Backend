@@ -77,9 +77,9 @@ export class AccountModule {
             .use("/", (_, res: Response, __) => { res.status(404).send() })
             .use(errorHandler.handle.bind(errorHandler))
             .listen(port, () => {
-                console.log(`[Account] Up and running on ${port}`)
+                console.log(`Up and running on ${port}`)
             })
     }
 }
 
-AccountModule.start(Number(process.env.ACC_APP_PORT))
+AccountModule.start(accountEnv.APP_PORT)

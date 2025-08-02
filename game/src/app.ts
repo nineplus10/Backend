@@ -59,9 +59,9 @@ export class GameClientModule {
         }, 3*1000)
 
         connectionManager.server.listen(listenPort, () => {
-            console.log(`[GameClient] Up and running on ${listenPort}`)
+            console.log(`Up and running on ${listenPort}`)
         })
     }
 }
 
-GameClientModule.start(Number(process.env.MM_APP_PORT))
+GameClientModule.start(gameEnv.APP_PORT)

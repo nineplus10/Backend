@@ -3,6 +3,9 @@ import { z } from "zod"
 
 configDotenv({path: ".env"})
 const validator = z.object({
+    APP_PORT: z.coerce.number().min(0).max(65536),
+    ENV: z.union([z.literal("DEVEL"), z.literal("PROD")]),
+
     CACHE_URL: z.string().url(),
 
     /**
@@ -35,9 +38,11 @@ const validator = z.object({
 })
 
 const gameEnv = validator.parse({
-    ACCOUNT_API_KEY: process.env.MM_ACCOUNT_API_KEY,
-    AUTH_REFRESH_URL: `${process.env.MM_ACCOUNT_URL}${process.env.MM_REFRESH_PATH}`,
-    CACHE_URL: process.env.MM_CACHE_URL,
+    APP_PORT: process.env.APP_PORT,
+    ENV: process.env.APP_ENV,
+    ACCOUNT_API_KEY: process.env.ACCOUNT_API_KEY,
+    AUTH_REFRESH_URL: `${process.env.ACCOUNT_URL}${process.env.REFRESH_PATH}`,
+    CACHE_URL: process.env.CACHE_URL,
     BROKER_URL: ["broker:19092"],
     BROKER_PUB_TOPICS: {
         matchmaking: "game.matchmaking.queue",

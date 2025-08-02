@@ -15,7 +15,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@prisma/client": "^6.13.0",
+    "@prisma/client": "^6.8.2",
     "bcrypt-ts": "^7.1.0",
     "iovalkey": "^0.3.3",
     "jsonwebtoken": "^9.0.2",

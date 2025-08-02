@@ -1,4 +1,3 @@
-import { PrismaClient } from "@nineplus10/lib/src/_generated/prisma";
 import { PlayerRepo } from "../player.js";
 import { Player } from "../../domain/player.js";
 import { Stats } from "../../domain/entities/stats.js";
@@ -6,6 +5,7 @@ import { Handle } from "../../domain/values/handle.js";
 import { Bio } from "../../domain/values/bio.js";
 import { Email } from "../../domain/values/email.js";
 import { AuthRecord } from "../../domain/entities/authRecord.js";
+import { PrismaClient } from "../../_lib/_generated/prisma/index.js";
 
 export class PrismaPlayer implements PlayerRepo {
     async findMany(offset: number, limit: number): Promise<Player[]> {
