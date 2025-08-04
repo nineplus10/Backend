@@ -9,6 +9,7 @@ const JOIN_POOL_MSG = z.object({
     wins: z.coerce.number(),
     gamePlayed: z.coerce.number()
 })
+
 const LEAVE_POOL_MSG = z.object({
     playerId: z.coerce.number()
 })
@@ -16,6 +17,16 @@ const LEAVE_POOL_MSG = z.object({
 const JOIN_MATCH_MSG = z.object({
     roomId: z.string().optional(),
     playerId: z.coerce.number(),
+})
+
+const DO_ACTION_MSG = z.object({
+    roomId: z.string(),
+    playerId: z.coerce.number(),
+    actionName: z.union([
+        z.literal("HIT"),
+        z.literal("PASS"),
+        z.literal("USETRUMP"),
+    ])
 })
 
 export class MatchmakingController {
@@ -84,12 +95,50 @@ export class MatchmakingController {
             z.infer<typeof JOIN_MATCH_MSG>
                 >(JOIN_MATCH_MSG)
         const {data, error} = validator.validate(props)
-        if(error)
+        if(error) {
             onError(new AppError(
                 AppErr.BadRequest,
                 validator.getErrMessage(error)))
+            return
+        }
             
         await this._matchService.joinRoom(data.playerId, data.roomId)
             .catch(err => onError(err))
+    }
+
+    async doActionInMatch(msg: Message, _: Response, onError: OnErrorFx) {
+        const props = {
+            roomId: msg.data.roomId,
+            playerId: msg.data.player.id,
+            actionName: msg.data.actionName
+        }
+        const validator = new ZodValidator<
+            z.infer<typeof DO_ACTION_MSG>
+                >(DO_ACTION_MSG)
+        const {data, error} = validator.validate(props)
+        if(error) {
+            onError(new AppError(
+                AppErr.BadRequest,
+                validator.getErrMessage(error)))
+            return
+        }
+
+        // Stinks, but the usecase kinda stable for now so... let's keep it
+        let actionProps: any
+        if(data.actionName == "USETRUMP") { 
+            if(!msg.data.trumpIdx) {
+                onError(new AppError(
+                    AppErr.BadRequest,
+                    "To use trump, specify which trump to use"))
+                return
+            }
+            actionProps = { trumpIdx: msg.data.trumpIdx }
+        }
+        this._matchService.doAction(
+            data.playerId,
+            data.roomId,
+            data.actionName,
+            actionProps
+        )
     }
 }

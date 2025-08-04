@@ -5,6 +5,8 @@ import { MatchManager } from "../domain/services/match/manager.ts"
 import { AppErr, AppError } from "@nineplus10/lib/src/error/application.ts"
 import { Match } from "../domain/values/match.ts"
 import { Player } from "../domain/values/player.ts"
+import { Action } from "../domain/services/match/action.ts"
+import { Hit, Pass, UseTrump } from "../domain/services/match/action.list.ts"
 
 const attemptSkipCap = 10
 const MAX_PLAYER_PER_BATCH = 1000
@@ -22,7 +24,7 @@ export class MatchService {
 
     async joinPool(playerId: number, gamePlayed: number, wins: number): Promise<void> {
         const ongoingMatch = await this._matchCache.getCurrentMatchOf(playerId)
-        if(ongoingMatch && this._matchManager.isPlayerInMatch(ongoingMatch, playerId))
+        if(ongoingMatch && this._matchManager.getPlayerReference(ongoingMatch, playerId))
             throw new AppError(
                 AppErr.Forbidden,
                 `You still have an on-going match`)
@@ -90,5 +92,31 @@ export class MatchService {
         const actualRoomId = roomId ?? await this._matchCache.getCurrentMatchOf(playerId)
         if(actualRoomId)
             await this._matchManager.checkIn(playerId, actualRoomId)
+    }
+
+    async doAction(
+        playerId: number, 
+        roomId: string, 
+        actionName: "HIT" | "USETRUMP" | "PASS",
+        actionProp: any
+    ) {
+        const player = this._matchManager.getPlayerReference(roomId, playerId)
+        if(!player)
+            return
+
+        // Stinks, but the usecase kinda stable for now so... let's keep it
+        let action: Action
+        switch(actionName) {
+            case "HIT": 
+                action = new Hit(player)
+                break
+            case "USETRUMP":
+                action = new UseTrump(player, actionProp.trumpIdx)
+                break
+            case "PASS":
+                action = new Pass(player)
+                break
+        }
+        const actionResult = this._matchManager.doAction(roomId, action)
     }
 }

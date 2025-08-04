@@ -3,17 +3,18 @@ import { randomUUID } from "crypto";
 import { Match } from "../../values/match.ts";
 import { Game } from "./game.ts";
 import { AppErr, AppError } from "@nineplus10/lib/src/error/application.ts";
-
-type RoomId = string
-type ConnectionStatus = "READY" | "ONHOLD"
-
-const INIT_TIMEOUT = 300
-const INIT_TRANSITION_TIMEOUT = 5
+import { PlayerReference } from "./player.ts";
+import { Action } from "./action.ts";
 
 enum TimeoutMsg {
     RoomAborted = "WAITING FOR PLAYERS",
     RoomBegin = "GAME STARTED"
 }
+
+type RoomId = string
+
+const INIT_TIMEOUT = 300
+const INIT_TRANSITION_TIMEOUT = 5
 
 /** Handles the bookkeeping and messaging of rooms. */
 export class MatchManager {
@@ -21,15 +22,12 @@ export class MatchManager {
         [id: RoomId]:  {
             match: Match,
             timer: NodeJS.Timeout,
-            board: Game,
-            currentActor: number,
+            game: Game,
             playerProps: {
                 p1: {
-                    status: ConnectionStatus,
                     connection: string,
                 },
                 p2: {
-                    status: ConnectionStatus,
                     connection: string,
                 }
             },
@@ -46,6 +44,7 @@ export class MatchManager {
 
     init(match: Match): RoomId {
         const roomId = randomUUID()
+        const game = new Game()
         this._rooms[roomId] = {
             match: match,
             timer: setTimeout(
@@ -55,33 +54,33 @@ export class MatchManager {
                 },
                 INIT_TIMEOUT*1000
             ),
-            board: new Game(),
-            currentActor: Date.now() % 2,
+            game: game,
             playerProps: {
                 p1: {
-                    status: "ONHOLD",
-                    connection: "",
+                    connection: ""
                 }, 
                 p2: {
-                    status: "ONHOLD",
-                    connection: "",
+                    connection: ""
                 }
             },
             others: new Set<string>()
         }
 
+        game.subscribeOnAction((action: Action) => {
+            this.broadcastGameInfo(this._rooms[roomId])
+        })
         return roomId
     }
 
-    private broadcastBoard(room: typeof this._rooms[RoomId]) {
+    private broadcastGameInfo(room: typeof this._rooms[RoomId]) {
         const {p1, p2} = room.playerProps
-        const viewP1 = room.board.view("1")
-        const viewP2 = room.board.view("2")
+        const viewP1 = room.game.view("1")
+        const viewP2 = room.game.view("2")
 
         this.send(p1.connection, viewP1)
         this.send(p2.connection, viewP2)
         if(room.others.size > 0) {
-            const viewPublic = room.board.view("0")
+            const viewPublic = room.game.view("0")
             room.others.forEach(o => this.send(o, viewPublic))
         }
     }
@@ -110,10 +109,6 @@ export class MatchManager {
         this.broadcast(room, { msg: msg })
     }
 
-    spectate() {
-
-    }
-
     async checkIn(player: number, roomId: RoomId) {
         const room = this._rooms[roomId]
         if(!room)
@@ -132,33 +127,50 @@ export class MatchManager {
         this.broadcast(room, {msg: msg})
 
         const {p1, p2} = room.playerProps
-        const incomingPlayer = player == player1.id
+        const incomingPlayer = 
+            player == player1.id
                 ? room.playerProps.p1
                 : room.playerProps.p2
-        incomingPlayer.connection = connection
-        if(p1.status == "READY" && p2.status == "READY") {
-            this.send(connection, room.board.view((player === player1.id)? "1": "2"))
+        if(p1.connection !== "" && p2.connection !== "") { // Reconnection
+            this.send(connection, room.game.view((player === player1.id)? "1": "2"))
             return
         }
-        incomingPlayer.status = "READY"
 
-        if(p1.status == "READY" && p2.status == "READY") {
+        // Initial connection
+        incomingPlayer.connection = connection 
+        if(p1.connection !== "" && p2.connection !== "") {
             room.timer.close()
             room.timer = setTimeout(() => {
                 console.log(TimeoutMsg.RoomBegin)
             }, INIT_TRANSITION_TIMEOUT)
 
-            this.broadcastBoard(room)
+            this.broadcastGameInfo(room)
+            this.send(
+                room.game.currentPlayer === "1"? p1.connection: p2.connection,
+                {msg: "Your turn"})
             room.timer
         }
     }
 
-    isPlayerInMatch(roomId: RoomId, player: number): boolean {
+    getPlayerReference(roomId: RoomId, player: number): PlayerReference | undefined {
+        const room = this._rooms[roomId]
+        if(!room)
+            return undefined
+
+        const {player1, player2} = room.match
+        switch(player) {
+            case player1.id: return "1"
+            case player2.id: return "2"
+            default: return undefined
+        }
+    }
+
+    doAction(roomId: RoomId, action: Action): boolean {
         const room = this._rooms[roomId]
         if(!room)
             return false
 
-        const {player1, player2} = room.match
-        return player === player1.id || player === player2.id
+        room.game.act(action)
+        return true
     }
 }

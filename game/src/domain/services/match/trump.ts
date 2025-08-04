@@ -1,4 +1,5 @@
-import { Game, PlayerReference } from "./game.ts"
+import { Game } from "./game.ts"
+import { PlayerReference } from "./player.ts"
 
 type TrumpInfo = {
     name: string,

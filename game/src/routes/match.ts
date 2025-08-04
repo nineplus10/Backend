@@ -11,6 +11,7 @@ export class MatchRouter extends WsRouter  {
             ["play", controller.joinPool.bind(controller)],
             ["quit", controller.leavePool.bind(controller)],
             ["join", controller.joinMatch.bind(controller)],
+            ["act", controller.doActionInMatch.bind(controller)]
         ]
     }
 

@@ -1,4 +1,5 @@
-import { Game, PlayerReference } from "./game.ts";
+import { Game } from "./game.ts";
+import { PlayerReference } from "./player.ts";
 import { Trump } from "./trump.ts";
 
 class GoFor17 implements Trump {

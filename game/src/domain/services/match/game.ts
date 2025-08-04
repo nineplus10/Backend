@@ -1,7 +1,9 @@
+import { Hit, Pass, UseTrump } from "./action.list.ts"
+import { Action } from "./action.ts"
 import { Deck } from "./card.deck.ts"
-import { PlayerState } from "./player.ts"
+import { PlayerReference, PlayerState } from "./player.ts"
 
-export type PlayerReference = "1" | "2"
+type onActionFx = (a: Action) => void
 
 export class Game {
     private _cap: number
@@ -9,6 +11,9 @@ export class Game {
     private _deck: Deck
     private _player1: PlayerState
     private _player2: PlayerState
+    private _lastAction: [Action, Action]
+    private _currentPlayer: PlayerReference
+    private _onAction: onActionFx[]
 
     constructor() {
         this._cap = 21
@@ -16,6 +21,9 @@ export class Game {
         this._deck = new Deck()
         this._player1 = new PlayerState(10, this._round, this._deck)
         this._player2 = new PlayerState(10, this._round, this._deck)
+        this._lastAction = [ new Hit("1"), new Hit("2") ]
+        this._onAction = []
+        this._currentPlayer = "1"
     }
 
     /** Returns the current board with modification based on who will view them.
@@ -41,7 +49,7 @@ export class Game {
     }
 
     /** Ends current round and prepares the next round */
-    advance() {
+    private advance() {
         let loser: PlayerState;
         const sumP1 = this._player1.cards.sum()
         const sumP2 = this._player2.cards.sum()
@@ -62,8 +70,9 @@ export class Game {
         this._cap = 21
         this._round++
         this._deck = new Deck()
-        this._player1.onNextRound(this.deck)
-        this._player2.onNextRound(this.deck)
+        this._player1.onNextRound(this._round, this._deck)
+        this._player2.onNextRound(this._round, this._deck)
+        this._currentPlayer = this._round % 2 === 1? "1": "2"
     }
 
     /** Sets cap for current round.
@@ -76,9 +85,32 @@ export class Game {
         this._cap = c
     }
 
+    act(action: Action): boolean {
+        if(this._currentPlayer !== action.actor())
+            return false
+        action.doOn(this)
+        this._currentPlayer = this._currentPlayer === "1"? "2": "1"
+
+        // Is there a better way than using instanceof thing?
+        if(!(action instanceof UseTrump)) {
+            this._lastAction[0] = this._lastAction[1]
+            this._lastAction[1] = action
+        }
+        if(this._lastAction.every(la => la instanceof Pass))
+            this.advance()
+
+        this._onAction.forEach(fx => fx(action))
+        return true
+    }
+
+    subscribeOnAction(fx: onActionFx) {
+        this._onAction.push(fx)
+    }
+
     get cap(): typeof this._cap { return this._cap }
     get round(): typeof this._round { return this._round }
     get deck(): typeof this._deck { return this._deck }
     get player1(): typeof this._player1 { return this._player1 }
     get player2(): typeof this._player2 { return this._player2 }
+    get currentPlayer(): typeof this._currentPlayer {return this._currentPlayer}
 }

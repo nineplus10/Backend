@@ -2,6 +2,8 @@ import { Deck } from "./card.deck.ts"
 import { CardSet } from "./card.set.ts"
 import { TrumpSet } from "./trump.set.ts"
 
+export type PlayerReference = "1" | "2"
+
 export class PlayerState {
     private _cards: CardSet
     private _trumps: TrumpSet
@@ -41,8 +43,8 @@ export class PlayerState {
      * 
      * @param deck 
      */
-    onNextRound(deck: Deck) {
-        this._bet++
+    onNextRound( round: number, deck: Deck) {
+        this._bet = round
         this._cards = new CardSet(deck)
         this.trumps.clearOnTable()
     }
