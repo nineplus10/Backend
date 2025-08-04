@@ -91,7 +91,7 @@ export class TrumpSet {
     }
 
     use(idx: number): Trump | undefined {
-        if(idx < 0 || idx > this._inHand.length)
+        if(idx < 0 || idx >= this._inHand.length)
             return undefined
 
         const trump = this._inHand[idx]

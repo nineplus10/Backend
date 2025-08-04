@@ -126,7 +126,7 @@ export class MatchmakingController {
         // Stinks, but the usecase kinda stable for now so... let's keep it
         let actionProps: any
         if(data.actionName == "USETRUMP") { 
-            if(!msg.data.trumpIdx) {
+            if(msg.data.trumpIdx === undefined) {
                 onError(new AppError(
                     AppErr.BadRequest,
                     "To use trump, specify which trump to use"))
