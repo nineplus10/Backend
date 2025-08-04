@@ -9,11 +9,19 @@ This repo holds the brain of the game! and... its supporting functionalities
 
 ## Feature Roadmap
 
-- [ ] Core game
+- [X] Matchmaking
+  - [x] Adaptive matchmaking based on lobby traffic
+  - [x] Easy to replace matchmaking strategies
+- [x] Core game
+  - [x] Base game flow
+  - [x] Shared deck draw
+  - [x] Trump cards draw and usage*
 - [ ] Leaderboard
 - [ ] Spectactor chat
-- [ ] Match Playback (Replay)
+- [ ] Match playback/replay
 - [ ] Custom room
+
+> \*The trump cards available in the game is still limited compared to the original game. Probability-based drawing is also not supported yet.
 
 ## Tech Stack
 
