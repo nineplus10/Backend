@@ -47,6 +47,7 @@ export class PlayerState {
         this._bet = round
         this._cards = new CardSet(deck)
         this.trumps.clearOnTable()
+        this.trumps.draw(1)
     }
 
     get cards(): PlayerState["_cards"] {return this._cards}

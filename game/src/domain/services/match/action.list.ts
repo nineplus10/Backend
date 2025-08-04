@@ -23,7 +23,9 @@ export class UseTrump implements Action {
 
     doOn(g: Game): void {
         const player = this._actor == "1"? g.player1: g.player2
-        player.trumps.use(this._trumpIdx)
+        const trump = player.trumps.pick(this._trumpIdx)
+        if(trump)
+            trump.apply(this._actor, g)
     }
 
     actor(): PlayerReference { return this._actor }

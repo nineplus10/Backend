@@ -90,13 +90,12 @@ export class TrumpSet {
         this._onTable = []
     }
 
-    use(idx: number): Trump | undefined {
+    pick(idx: number): Trump | undefined {
         if(idx < 0 || idx >= this._inHand.length)
             return undefined
 
         const trump = this._inHand[idx]
         this._inHand = [...this._inHand.slice(0, idx), ...this._inHand.slice(idx + 1)]
-        this._onTable.push(trump)
         return trump
     }
 }

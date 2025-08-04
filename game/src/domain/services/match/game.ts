@@ -89,13 +89,17 @@ export class Game {
         if(this._currentPlayer !== action.actor())
             return false
         action.doOn(this)
-        this._currentPlayer = this._currentPlayer === "1"? "2": "1"
 
-        // Is there a better way than using instanceof thing?
+        // The amount of possible action is highly likely would be stable so...
+        // this should be enough, albeit it's not the most elegant out there.
+        // We're talking about that 'instanceof' thing
         if(!(action instanceof UseTrump)) {
+            this._currentPlayer = this._currentPlayer === "1"? "2": "1"
             this._lastAction[0] = this._lastAction[1]
             this._lastAction[1] = action
         }
+
+        console.log(this._lastAction)
         if(this._lastAction.every(la => la instanceof Pass))
             this.advance()
 
